@@ -1,0 +1,654 @@
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
+import {
+  Plus, Pencil, Trash2, X, Loader2,
+  Users, UserCircle, MapPin, Crown,
+  Sun, Moon
+} from 'lucide-react';
+
+import {
+  tableAPI,
+  capacityHelpers,
+  TableStatus,
+  TableType,
+} from '../api/tables';
+import { useAuthStore } from '../store/authStore';
+
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+
+const TYPE_CONFIG = [
+  { type: TableType.Simple,  label: 'Ichkari', icon: MapPin },
+  { type: TableType.Terrace, label: 'Terasa', icon: MapPin },
+  { type: TableType.VIP,     label: 'VIP',     icon: Crown  },
+];
+
+const DEFAULT_FORM = {
+  tableNumber: '',
+  capacity:    '',
+  tableStatus: TableStatus.Free,
+  tableType:   TableType.Simple,
+};
+
+// ─── TABLE CARD ───────────────────────────────────────────────────────────────
+
+const TableCard = ({ table, onEdit, onDelete, canEdit, canDelete, isDark }) => {
+  // Capacity — API dan yoki localStorage dan
+  const capacity = table.capacity ?? capacityHelpers.get(table.id);
+
+  const getStatusConfig = (status) => ({
+    [TableStatus.Free]: {
+      badge: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
+      label: "Bo'sh",
+      dot: null,
+      cardBorder: isDark ? 'border-gray-800 hover:border-emerald-500/50' : 'border-gray-100 hover:border-emerald-300',
+      number: isDark ? 'text-gray-100' : 'text-gray-800',
+    },
+    [TableStatus.Occupied]: {
+      badge: 'bg-rose-500/20 text-rose-400 border border-rose-500/30',
+      label: 'Band',
+      dot: 'bg-rose-500',
+      cardBorder: isDark ? 'border-rose-900/50 hover:border-rose-500/50' : 'border-rose-100 hover:border-rose-300',
+      number: isDark ? 'text-rose-400' : 'text-rose-500',
+    },
+    [TableStatus.Reserved]: {
+      badge: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
+      label: 'Rezerv',
+      dot: 'bg-amber-400',
+      cardBorder: isDark ? 'border-amber-900/50 hover:border-amber-500/50' : 'border-amber-100 hover:border-amber-300',
+      number: isDark ? 'text-amber-400' : 'text-amber-500',
+    },
+  }[status]);
+
+  const statusCfg = getStatusConfig(table.tableStatus);
+
+  return (
+    <div className={`relative rounded-2xl border-2 p-4 cursor-pointer group
+                    transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg
+                    ${isDark ? 'bg-gray-900' : 'bg-white'} ${statusCfg.cardBorder}`}>
+
+      {/* Type badge — yuqori o'ng */}
+      <div className={`absolute top-2.5 right-2.5 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide ${
+        isDark ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'
+      }`}>
+        {table.tableType === TableType.Simple ? 'Ichkari' : table.tableType === TableType.Terrace ? 'Terasa' : 'VIP'}
+      </div>
+
+      {/* Status dot */}
+      {statusCfg.dot && (
+        <div className="absolute top-2.5 left-2.5">
+          <span className="relative flex h-2 w-2">
+            {table.tableStatus === TableStatus.Occupied && (
+              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${statusCfg.dot} opacity-75`} />
+            )}
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${statusCfg.dot}`} />
+          </span>
+        </div>
+      )}
+
+      {/* STOL label */}
+      <p className={`text-[10px] font-semibold uppercase tracking-widest mt-3 ${
+        isDark ? 'text-gray-400' : 'text-gray-500'
+      }`}>
+        STOL
+      </p>
+
+      {/* Stol raqami */}
+      <p className={`text-3xl font-black leading-none mt-0.5 ${statusCfg.number}`}>
+        #{table.tableNumber}
+      </p>
+
+      {/* Status badge */}
+      <div className="mt-2">
+        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${statusCfg.badge}`}>
+          {statusCfg.label}
+        </span>
+      </div>
+
+      {/* Capacity + Waiter */}
+      <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center gap-1">
+          <Users size={11} className={isDark ? 'text-gray-400' : 'text-gray-500'} />
+          <span className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+            {capacity ? `${capacity} kishi` : '—'}
+          </span>
+        </div>
+        {table.waiterName && (
+          <div className="flex items-center gap-1">
+            <UserCircle size={11} className="text-orange-400" />
+            <span className="text-xs font-medium text-orange-400 truncate max-w-16">
+              {table.waiterName}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Active order SKU — band bo'lsa */}
+      {table.tableStatus === TableStatus.Occupied && table.activeSku && (
+        <div className={`mt-2 px-2 py-1 rounded-lg text-[10px] font-mono ${
+          isDark ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'
+        }`}>
+          {table.activeSku}
+        </div>
+      )}
+
+      {/* Edit/Delete — hover da */}
+      {(canEdit || canDelete) && (
+        <div className="absolute inset-0 rounded-2xl bg-black/60 opacity-0 group-hover:opacity-100
+                        transition-opacity flex items-center justify-center gap-2">
+          {canEdit && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit(table); }}
+              className="p-2 bg-white/10 hover:bg-white/20 rounded-xl backdrop-blur-sm transition-colors"
+            >
+              <Pencil size={14} className="text-white" />
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(table); }}
+              className="p-2 bg-red-500/30 hover:bg-red-500/50 rounded-xl backdrop-blur-sm transition-colors"
+            >
+              <Trash2 size={14} className="text-red-300" />
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+
+const TablesPage = () => {
+  const queryClient = useQueryClient();
+  const { hasPermission } = useAuthStore();
+
+  const [isDark, setIsDark]       = useState(false);
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditing, setIsEditing]     = useState(false);
+  const [editId, setEditId]           = useState(null);
+  const [formData, setFormData]       = useState(DEFAULT_FORM);
+
+  // ── Theme helper ──
+  const theme = {
+    page: isDark ? 'bg-gray-950 min-h-screen' : 'bg-gray-50 min-h-screen',
+    card: isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100',
+    text: isDark ? 'text-gray-100' : 'text-gray-900',
+    subtext: isDark ? 'text-gray-400' : 'text-gray-500',
+    section: isDark ? 'text-gray-300' : 'text-gray-700',
+    filterBtn: isDark ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-white border-gray-200 text-gray-600',
+    filterActive: isDark ? 'bg-gray-100 text-gray-900' : 'bg-gray-900 text-white',
+    divider: isDark ? 'bg-gray-700' : 'bg-gray-200',
+  };
+
+  // ── Queries ──
+  const { data: tables = [], isLoading, isFetching } = useQuery({
+    queryKey: ['tables'],
+    queryFn: tableAPI.getAll,
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: true,
+  });
+
+  // ── Mutations ──
+  const createMutation = useMutation({
+    mutationFn: ({ tableNumber, tableStatus, tableType }) =>
+      tableAPI.create({ tableNumber, tableStatus, tableType }),
+    onSuccess: async (_, variables) => {
+      const updated = await queryClient.fetchQuery({
+        queryKey: ['tables'],
+        queryFn: tableAPI.getAll,
+      });
+      const newTable = updated.find((t) => t.tableNumber === variables.tableNumber);
+      if (newTable && variables.capacity) {
+        capacityHelpers.set(newTable.id, parseInt(variables.capacity));
+      }
+      queryClient.invalidateQueries(['tables']);
+      toast.success("Stol qo'shildi");
+      closeModal();
+    },
+    onError: (err) => toast.error(err.response?.data?.message ?? "Qo'shishda xatolik"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, tableNumber, tableStatus, tableType }) =>
+      tableAPI.update({ id, tableNumber, tableStatus, tableType }),
+    onSuccess: (_, variables) => {
+      if (variables.capacity !== undefined) {
+        const cap = parseInt(variables.capacity);
+        if (cap > 0) capacityHelpers.set(variables.id, cap);
+      }
+      queryClient.invalidateQueries(['tables']);
+      toast.success('Stol yangilandi');
+      closeModal();
+    },
+    onError: (err) => {
+      console.error('Update error:', err.response?.data || err.message);
+      const msg = err.response?.data?.message || err.response?.data || 'Yangilashda xatolik';
+      toast.error(msg);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: tableAPI.delete,
+    onSuccess: (_, id) => {
+      capacityHelpers.delete(id);
+      queryClient.invalidateQueries(['tables']);
+      toast.success("Stol o'chirildi");
+    },
+    onError: (err) => {
+      const msg = err.response?.data?.message ?? err.message ?? "O'chirishda xatolik";
+      toast.error(msg);
+    },
+  });
+
+  // ── Handlers ──
+  const openCreateModal = () => {
+    setIsEditing(false);
+    setEditId(null);
+    setFormData(DEFAULT_FORM);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (table) => {
+    setIsEditing(true);
+    setEditId(table.id);
+    setFormData({
+      tableNumber: table.tableNumber,
+      capacity:    table.capacity ?? capacityHelpers.get(table.id) ?? '',
+      tableStatus: table.tableStatus,
+      tableType:   table.tableType,
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (table) => {
+    if (confirm(`${table.tableNumber}-stol o'chirilsinmi?`)) {
+      deleteMutation.mutate(table.id);
+    }
+  };
+
+  const closeModal = () => setIsModalOpen(false);
+
+  const handleInput = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const num = parseInt(formData.tableNumber);
+    if (!num || num < 1) { toast.error("Stol raqami 1 dan katta bo'lishi kerak"); return; }
+
+    const payload = {
+      tableNumber: num,
+      capacity:    formData.capacity,
+      tableStatus: parseInt(formData.tableStatus),
+      tableType:   parseInt(formData.tableType),
+    };
+
+    if (isEditing) updateMutation.mutate({ id: editId, ...payload });
+    else           createMutation.mutate(payload);
+  };
+
+  // ── Stats ──
+  const freeCount     = tables.filter((t) => t.tableStatus === TableStatus.Free).length;
+  const occupiedCount = tables.filter((t) => t.tableStatus === TableStatus.Occupied).length;
+  const reservedCount = tables.filter((t) => t.tableStatus === TableStatus.Reserved).length;
+
+  const isMutating = createMutation.isPending || updateMutation.isPending;
+
+  const canEdit   = hasPermission('Table_Update');
+  const canDelete = hasPermission('Table_Delete');
+
+  // ── Filter ──
+  const filteredTables = typeFilter === 'all'
+    ? tables
+    : tables.filter(t => t.tableType === typeFilter);
+
+  const tableTypes = typeFilter === 'all' ? [TableType.Simple, TableType.Terrace, TableType.VIP] : [typeFilter];
+
+  // ─── LOADING SKELETON ────────────────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <div className={`${theme.page} p-6`}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className={`h-32 rounded-2xl animate-pulse ${
+              isDark ? 'bg-gray-800' : 'bg-gray-200'
+            }`} />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className={`h-32 rounded-2xl animate-pulse ${
+              isDark ? 'bg-gray-800' : 'bg-gray-200'
+            }`} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── RENDER ──────────────────────────────────────────────────────────────
+  return (
+    <div className={`${theme.page} p-6`}>
+
+      {/* ── PAGE HEADER ── */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className={`text-2xl font-black tracking-tight ${theme.text}`}>Stollar</h1>
+          <p className={`text-sm mt-0.5 ${theme.subtext}`}>Restoran stollarini boshqaring</p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Live indicator */}
+          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${
+            isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+              isFetching ? 'bg-orange-400' : 'bg-green-400'
+            }`} />
+            <span className={`text-xs font-medium ${theme.subtext}`}>Live</span>
+          </div>
+
+          {/* Dark/Light toggle */}
+          <button
+            onClick={() => setIsDark(!isDark)}
+            className={`p-2.5 rounded-xl border transition-all ${
+              isDark
+                ? 'bg-gray-800 border-gray-700 text-yellow-400 hover:bg-gray-700'
+                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
+            }`}
+            title={isDark ? "Light mode" : "Dark mode"}
+          >
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
+
+          {/* Yangi stol */}
+          {hasPermission('Table_Create') && (
+            <button
+              onClick={openCreateModal}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
+                         transition-colors shadow-sm ${
+                           isDark
+                             ? 'bg-white text-gray-900 hover:bg-gray-100'
+                             : 'bg-gray-900 text-white hover:bg-gray-700'
+                         }`}
+            >
+              <Plus size={16} />
+              Yangi stol
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── STATS CARDS ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        {[
+          { label: 'Jami', count: tables.length, color: isDark ? 'text-gray-100' : 'text-gray-800' },
+          { label: "Bo'sh", count: freeCount, color: 'text-emerald-500' },
+          { label: 'Band', count: occupiedCount, color: 'text-rose-500' },
+          { label: 'Rezerv', count: reservedCount, color: 'text-amber-500' },
+        ].map(stat => (
+          <div key={stat.label} className={`rounded-2xl p-4 border shadow-sm ${theme.card}`}>
+            <p className={`text-xs font-medium uppercase tracking-widest ${theme.subtext}`}>{stat.label}</p>
+            <p className={`text-4xl font-black mt-1 ${stat.color}`}>{stat.count}</p>
+            <div className={`mt-2 h-0.5 w-10 rounded-full ${theme.divider}`} />
+          </div>
+        ))}
+      </div>
+
+      {/* ── TYPE FILTER TABS ── */}
+      <div className="flex items-center gap-2 mb-6 flex-wrap">
+        {[
+          { label: 'Hammasi', value: 'all' },
+          { label: 'Ichkari', value: TableType.Simple, icon: <MapPin size={12} /> },
+          { label: 'Terasa', value: TableType.Terrace, icon: <MapPin size={12} /> },
+          { label: 'VIP', value: TableType.VIP, icon: <Crown size={12} /> },
+        ].map(f => (
+          <button
+            key={f.value}
+            onClick={() => setTypeFilter(f.value)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold
+                       border transition-all ${
+                         typeFilter === f.value
+                           ? theme.filterActive
+                           : theme.filterBtn + ' hover:border-orange-300'
+                       }`}
+          >
+            {f.icon}
+            {f.label}
+            {f.value !== 'all' && (
+              <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                typeFilter === f.value
+                  ? isDark ? 'bg-gray-700 text-gray-200' : 'bg-white/20 text-white'
+                  : isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'
+              }`}>
+                {tables.filter(t => t.tableType === f.value).length}
+              </span>
+            )}
+          </button>
+        ))}
+
+        {/* Status counter badges — o'ng tomonda */}
+        <div className="ml-auto flex items-center gap-2">
+          {[
+            { label: "Bo'sh", status: TableStatus.Free, dot: 'bg-emerald-400' },
+            { label: 'Band', status: TableStatus.Occupied, dot: 'bg-rose-400' },
+            { label: 'Rezerv', status: TableStatus.Reserved, dot: 'bg-amber-400' },
+          ].map(s => (
+            <div key={s.status} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs ${
+              isDark ? 'bg-gray-900' : 'bg-white border border-gray-100'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+              <span className={theme.subtext}>{s.label} — </span>
+              <span className={`font-bold ${theme.text}`}>
+                {tables.filter(t => t.tableStatus === s.status).length} ta
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── TABLE SECTIONS ── */}
+      <div className="space-y-8">
+        {tableTypes.map((type) => {
+          const sectionTables = filteredTables.filter(t => t.tableType === type);
+          if (sectionTables.length === 0) return null;
+
+          const config = TYPE_CONFIG.find(c => c.type === type);
+          const Icon = config.icon;
+          const iconBg = type === TableType.VIP
+            ? 'bg-gradient-to-br from-amber-400 to-orange-500'
+            : type === TableType.Terrace
+            ? (isDark ? 'bg-emerald-800' : 'bg-emerald-600')
+            : (isDark ? 'bg-gray-700' : 'bg-gray-900');
+
+          return (
+            <div key={type} className="mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-8 h-8 rounded-xl ${iconBg} flex items-center justify-center text-white`}>
+                  <Icon size={14} />
+                </div>
+                <h2 className={`text-sm font-bold uppercase tracking-widest ${theme.section}`}>
+                  {config.label}
+                </h2>
+                <div className={`flex-1 h-px ${theme.divider}`} />
+                <span className={`text-xs font-medium ${theme.subtext}`}>
+                  {sectionTables.filter(t => t.tableStatus === TableStatus.Occupied).length} band •{' '}
+                  {sectionTables.filter(t => t.tableStatus === TableStatus.Free).length} bo'sh stol
+                </span>
+              </div>
+
+              {/* Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                {sectionTables.map(table => (
+                  <TableCard
+                    key={table.id}
+                    table={table}
+                    onEdit={openEditModal}
+                    onDelete={handleDelete}
+                    canEdit={canEdit}
+                    canDelete={canDelete}
+                    isDark={isDark}
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {tables.length === 0 && (
+        <div className={`flex flex-col items-center justify-center py-24 ${theme.subtext}`}>
+          <span className="text-5xl mb-3">🪑</span>
+          <p className="font-medium">Hali stol qo'shilmagan</p>
+        </div>
+      )}
+
+      {/* ── MODAL ── */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className={`rounded-2xl w-full max-w-md shadow-2xl ${
+            isDark ? 'bg-gray-900' : 'bg-white'
+          }`}>
+
+            <div className={`flex items-center justify-between p-5 border-b ${
+              isDark ? 'border-gray-700' : 'border-gray-100'
+            }`}>
+              <h2 className={`text-xl font-bold ${theme.text}`}>
+                {isEditing ? 'Stolni tahrirlash' : "Yangi stol qo'shish"}
+              </h2>
+              <button
+                onClick={closeModal}
+                className={`p-1.5 rounded-lg ${
+                  isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+                }`}
+              >
+                <X size={20} className={theme.subtext} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-semibold mb-1.5 ${theme.section}`}>
+                    Stol raqami <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number" name="tableNumber" value={formData.tableNumber}
+                    onChange={handleInput} min={1} placeholder="5"
+                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none ${
+                      isDark
+                        ? 'bg-gray-800 border-gray-600 text-white'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className={`block text-sm font-semibold mb-1.5 ${theme.section}`}>
+                    O'rindiqlar soni
+                  </label>
+                  <input
+                    type="number" name="capacity" value={formData.capacity}
+                    onChange={handleInput} min={1} max={50} placeholder="4"
+                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none ${
+                      isDark
+                        ? 'bg-gray-800 border-gray-600 text-white'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* Turi */}
+              <div>
+                <label className={`block text-sm font-semibold mb-1.5 ${theme.section}`}>Turi</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {TYPE_CONFIG.map(({ type, label }) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, tableType: type }))}
+                      className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                        parseInt(formData.tableType) === type
+                          ? (isDark
+                              ? 'bg-white text-gray-900 border-white'
+                              : 'bg-gray-900 text-white border-gray-900')
+                          : (isDark
+                              ? 'bg-gray-800 text-gray-300 border-gray-600 hover:border-gray-400'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400')
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div>
+                <label className={`block text-sm font-semibold mb-1.5 ${theme.section}`}>Status</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { val: TableStatus.Free,     label: "Bo'sh",  cls: 'bg-emerald-500 border-emerald-500 text-white' },
+                    { val: TableStatus.Occupied, label: 'Band',   cls: 'bg-rose-500 border-rose-500 text-white'       },
+                    { val: TableStatus.Reserved, label: 'Rezerv', cls: 'bg-amber-400 border-amber-400 text-gray-900'  },
+                  ].map(({ val, label, cls }) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, tableStatus: val }))}
+                      className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                        parseInt(formData.tableStatus) === val
+                          ? cls
+                          : (isDark
+                              ? 'bg-gray-800 text-gray-300 border-gray-600 hover:border-gray-400'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400')
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className={`flex justify-end gap-3 pt-2 border-t ${
+                isDark ? 'border-gray-700' : 'border-gray-100'
+              }`}>
+                <button
+                  type="button" onClick={closeModal}
+                  className={`px-5 py-2.5 rounded-xl font-medium transition-colors ${
+                    isDark
+                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  type="submit" disabled={isMutating}
+                  className={`px-6 py-2.5 rounded-xl font-medium disabled:opacity-50
+                             flex items-center gap-2 transition-colors shadow-sm ${
+                               isDark
+                                 ? 'bg-white text-gray-900 hover:bg-gray-100'
+                                 : 'bg-gray-900 text-white hover:bg-gray-700'
+                             }`}
+                >
+                  {isMutating && <Loader2 size={16} className="animate-spin" />}
+                  {isEditing ? 'Saqlash' : "Qo'shish"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default TablesPage;

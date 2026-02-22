@@ -4,16 +4,15 @@ import { toast } from 'react-hot-toast';
 import {
   Plus, Pencil, Trash2, X, Loader2,
   Users, UserCircle, MapPin, Crown,
-  Sun, Moon
 } from 'lucide-react';
 
 import {
   tableAPI,
-  capacityHelpers,
   TableStatus,
   TableType,
 } from '../api/tables';
 import { useAuthStore } from '../store/authStore';
+import { useThemeStore } from '../store/themeStore';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
@@ -26,6 +25,7 @@ const TYPE_CONFIG = [
 const DEFAULT_FORM = {
   tableNumber: '',
   capacity:    '',
+  waiterName:  '',
   tableStatus: TableStatus.Free,
   tableType:   TableType.Simple,
 };
@@ -33,8 +33,8 @@ const DEFAULT_FORM = {
 // ─── TABLE CARD ───────────────────────────────────────────────────────────────
 
 const TableCard = ({ table, onEdit, onDelete, canEdit, canDelete, isDark }) => {
-  // Capacity — API dan yoki localStorage dan
-  const capacity = table.capacity ?? capacityHelpers.get(table.id);
+  // Capacity — now provided by backend in `table.capacity`
+  const capacity = table.capacity;
 
   const getStatusConfig = (status) => ({
     [TableStatus.Free]: {
@@ -164,7 +164,7 @@ const TablesPage = () => {
   const queryClient = useQueryClient();
   const { hasPermission } = useAuthStore();
 
-  const [isDark, setIsDark]       = useState(false);
+  const { isDark } = useThemeStore();
   const [typeFilter, setTypeFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing]     = useState(false);
@@ -193,17 +193,17 @@ const TablesPage = () => {
 
   // ── Mutations ──
   const createMutation = useMutation({
-    mutationFn: ({ tableNumber, tableStatus, tableType }) =>
-      tableAPI.create({ tableNumber, tableStatus, tableType }),
-    onSuccess: async (_, variables) => {
-      const updated = await queryClient.fetchQuery({
-        queryKey: ['tables'],
-        queryFn: tableAPI.getAll,
-      });
-      const newTable = updated.find((t) => t.tableNumber === variables.tableNumber);
-      if (newTable && variables.capacity) {
-        capacityHelpers.set(newTable.id, parseInt(variables.capacity));
+    mutationFn: ({ tableNumber, tableStatus, tableType, capacity, waiterName }) =>
+      tableAPI.create({ tableNumber, tableStatus, tableType, capacity, waiterName }),
+    onSuccess: async (data, variables) => {
+      // If backend returns the created table, use it; otherwise refetch
+      let created = null;
+      if (data && data.id) created = data;
+      else {
+        const updated = await queryClient.fetchQuery({ queryKey: ['tables'], queryFn: tableAPI.getAll });
+        created = updated.find((t) => t.tableNumber === variables.tableNumber) ?? null;
       }
+      // Backend now stores capacity; nothing to persist locally
       queryClient.invalidateQueries(['tables']);
       toast.success("Stol qo'shildi");
       closeModal();
@@ -212,13 +212,10 @@ const TablesPage = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, tableNumber, tableStatus, tableType }) =>
-      tableAPI.update({ id, tableNumber, tableStatus, tableType }),
-    onSuccess: (_, variables) => {
-      if (variables.capacity !== undefined) {
-        const cap = parseInt(variables.capacity);
-        if (cap > 0) capacityHelpers.set(variables.id, cap);
-      }
+    mutationFn: ({ id, tableNumber, tableStatus, tableType, capacity, waiterName }) =>
+      tableAPI.update({ id, tableNumber, tableStatus, tableType, capacity, waiterName }),
+    onSuccess: (data, variables) => {
+      // Backend stores capacity; just refresh
       queryClient.invalidateQueries(['tables']);
       toast.success('Stol yangilandi');
       closeModal();
@@ -232,8 +229,8 @@ const TablesPage = () => {
 
   const deleteMutation = useMutation({
     mutationFn: tableAPI.delete,
-    onSuccess: (_, id) => {
-      capacityHelpers.delete(id);
+    onSuccess: (_, variables) => {
+      // Backend removed the table and capacity is server-side; just refresh
       queryClient.invalidateQueries(['tables']);
       toast.success("Stol o'chirildi");
     },
@@ -256,7 +253,8 @@ const TablesPage = () => {
     setEditId(table.id);
     setFormData({
       tableNumber: table.tableNumber,
-      capacity:    table.capacity ?? capacityHelpers.get(table.id) ?? '',
+      capacity:    table.capacity ?? '',
+      waiterName:  table.waiterName ?? '',
       tableStatus: table.tableStatus,
       tableType:   table.tableType,
     });
@@ -278,14 +276,27 @@ const TablesPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validate tableNumber
     const num = parseInt(formData.tableNumber);
-    if (!num || num < 1) { toast.error("Stol raqami 1 dan katta bo'lishi kerak"); return; }
+    if (!num || num < 1) {
+      toast.error("Stol raqami 1 dan katta bo'lishi kerak");
+      return;
+    }
+
+    // Validate capacity
+    const cap = parseInt(formData.capacity);
+    if (!cap || cap < 1) {
+      toast.error("O'rindiqlar soni 1 dan katta bo'lishi kerak");
+      return;
+    }
 
     const payload = {
       tableNumber: num,
-      capacity:    formData.capacity,
+      capacity:    cap,
       tableStatus: parseInt(formData.tableStatus),
       tableType:   parseInt(formData.tableType),
+      waiterName:  formData.waiterName?.trim() || undefined,
     };
 
     if (isEditing) updateMutation.mutate({ id: editId, ...payload });
@@ -339,7 +350,7 @@ const TablesPage = () => {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className={`text-2xl font-black tracking-tight ${theme.text}`}>Stollar</h1>
-          <p className={`text-sm mt-0.5 ${theme.subtext}`}>Restoran stollarini boshqaring</p>
+          <p className={`text-sm mt-0.5 ${theme.subtext}`}>Restoran stollari</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -352,19 +363,6 @@ const TablesPage = () => {
             }`} />
             <span className={`text-xs font-medium ${theme.subtext}`}>Live</span>
           </div>
-
-          {/* Dark/Light toggle */}
-          <button
-            onClick={() => setIsDark(!isDark)}
-            className={`p-2.5 rounded-xl border transition-all ${
-              isDark
-                ? 'bg-gray-800 border-gray-700 text-yellow-400 hover:bg-gray-700'
-                : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-            }`}
-            title={isDark ? "Light mode" : "Dark mode"}
-          >
-            {isDark ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
 
           {/* Yangi stol */}
           {hasPermission('Table_Create') && (
@@ -511,77 +509,94 @@ const TablesPage = () => {
       {/* ── MODAL ── */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className={`rounded-2xl w-full max-w-md shadow-2xl ${
+          <div className={`rounded-2xl w-full max-w-md shadow-2xl overflow-hidden ${
             isDark ? 'bg-gray-900' : 'bg-white'
           }`}>
 
-            <div className={`flex items-center justify-between p-5 border-b ${
-              isDark ? 'border-gray-700' : 'border-gray-100'
+            {/* Header */}
+            <div className={`flex items-center justify-between p-6 border-b ${
+              isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-100 bg-gray-50'
             }`}>
-              <h2 className={`text-xl font-bold ${theme.text}`}>
-                {isEditing ? 'Stolni tahrirlash' : "Yangi stol qo'shish"}
+              <h2 className={`text-lg font-bold ${theme.text}`}>
+                {isEditing ? '✏️ Stolni tahrirlash' : "➕ Yangi stol qo'shish"}
               </h2>
               <button
                 onClick={closeModal}
-                className={`p-1.5 rounded-lg ${
-                  isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+                className={`p-1.5 rounded-lg transition-colors ${
+                  isDark ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
                 }`}
               >
-                <X size={20} className={theme.subtext} />
+                <X size={20} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-4">
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5">
 
+              {/* Stol raqami + O'rindiqlar soni */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={`block text-sm font-semibold mb-1.5 ${theme.section}`}>
+                  <label className={`block text-sm font-semibold mb-2 ${theme.section}`}>
                     Stol raqami <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="number" name="tableNumber" value={formData.tableNumber}
-                    onChange={handleInput} min={1} placeholder="5"
-                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none ${
+                    type="number"
+                    name="tableNumber"
+                    value={formData.tableNumber}
+                    onChange={handleInput}
+                    min={1}
+                    placeholder="5"
+                    className={`w-full px-3 py-2.5 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all ${
                       isDark
-                        ? 'bg-gray-800 border-gray-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-900'
+                        ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
                     }`}
                     required
                   />
                 </div>
                 <div>
-                  <label className={`block text-sm font-semibold mb-1.5 ${theme.section}`}>
-                    O'rindiqlar soni
+                  <label className={`block text-sm font-semibold mb-2 ${theme.section}`}>
+                    O'rindiqlar soni <span className="text-red-500">*</span>
                   </label>
                   <input
-                    type="number" name="capacity" value={formData.capacity}
-                    onChange={handleInput} min={1} max={50} placeholder="4"
-                    className={`w-full p-3 border rounded-xl focus:ring-2 focus:ring-orange-500 outline-none ${
+                    type="number"
+                    name="capacity"
+                    value={formData.capacity}
+                    onChange={handleInput}
+                    min={1}
+                    max={50}
+                    placeholder="4"
+                    className={`w-full px-3 py-2.5 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all ${
                       isDark
-                        ? 'bg-gray-800 border-gray-600 text-white'
-                        : 'bg-white border-gray-300 text-gray-900'
+                        ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500'
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
                     }`}
+                    required
                   />
                 </div>
               </div>
 
-              {/* Turi */}
+           
+
+              {/* Stol turi */}
               <div>
-                <label className={`block text-sm font-semibold mb-1.5 ${theme.section}`}>Turi</label>
+                <label className={`block text-sm font-semibold mb-3 ${theme.section}`}>
+                  🏠 Stol turi
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                   {TYPE_CONFIG.map(({ type, label }) => (
                     <button
                       key={type}
                       type="button"
                       onClick={() => setFormData((prev) => ({ ...prev, tableType: type }))}
-                      className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                      className={`py-2.5 px-3 rounded-xl text-sm font-medium border-2 transition-all ${
                         parseInt(formData.tableType) === type
                           ? (isDark
-                              ? 'bg-white text-gray-900 border-white'
-                              : 'bg-gray-900 text-white border-gray-900')
+                              ? 'bg-orange-600 text-white border-orange-600 shadow-lg'
+                              : 'bg-orange-500 text-white border-orange-500 shadow-lg')
                           : (isDark
-                              ? 'bg-gray-800 text-gray-300 border-gray-600 hover:border-gray-400'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400')
+                              ? 'bg-gray-800 text-gray-300 border-gray-600 hover:border-gray-500'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300')
                       }`}
                     >
                       {label}
@@ -592,23 +607,25 @@ const TablesPage = () => {
 
               {/* Status */}
               <div>
-                <label className={`block text-sm font-semibold mb-1.5 ${theme.section}`}>Status</label>
+                <label className={`block text-sm font-semibold mb-3 ${theme.section}`}>
+                  ⚡ Holati
+                </label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { val: TableStatus.Free,     label: "Bo'sh",  cls: 'bg-emerald-500 border-emerald-500 text-white' },
-                    { val: TableStatus.Occupied, label: 'Band',   cls: 'bg-rose-500 border-rose-500 text-white'       },
-                    { val: TableStatus.Reserved, label: 'Rezerv', cls: 'bg-amber-400 border-amber-400 text-gray-900'  },
+                    { val: TableStatus.Free,     label: "Bo'sh",  cls: 'bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600' },
+                    { val: TableStatus.Occupied, label: 'Band',   cls: 'bg-rose-500 border-rose-500 text-white hover:bg-rose-600'       },
+                    { val: TableStatus.Reserved, label: 'Rezerv', cls: 'bg-amber-400 border-amber-400 text-gray-900 hover:bg-amber-500'  },
                   ].map(({ val, label, cls }) => (
                     <button
                       key={val}
                       type="button"
                       onClick={() => setFormData((prev) => ({ ...prev, tableStatus: val }))}
-                      className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-colors ${
+                      className={`py-2.5 px-3 rounded-xl text-sm font-medium border-2 transition-all ${
                         parseInt(formData.tableStatus) === val
                           ? cls
                           : (isDark
-                              ? 'bg-gray-800 text-gray-300 border-gray-600 hover:border-gray-400'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400')
+                              ? 'bg-gray-800 text-gray-300 border-gray-600 hover:border-gray-500'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300')
                       }`}
                     >
                       {label}
@@ -617,27 +634,29 @@ const TablesPage = () => {
                 </div>
               </div>
 
-              <div className={`flex justify-end gap-3 pt-2 border-t ${
+              {/* Buttons */}
+              <div className={`flex justify-end gap-3 pt-4 border-t ${
                 isDark ? 'border-gray-700' : 'border-gray-100'
               }`}>
                 <button
-                  type="button" onClick={closeModal}
+                  type="button"
+                  onClick={closeModal}
                   className={`px-5 py-2.5 rounded-xl font-medium transition-colors ${
                     isDark
                       ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  Bekor qilish
+                  Bekor
                 </button>
                 <button
-                  type="submit" disabled={isMutating}
-                  className={`px-6 py-2.5 rounded-xl font-medium disabled:opacity-50
-                             flex items-center gap-2 transition-colors shadow-sm ${
-                               isDark
-                                 ? 'bg-white text-gray-900 hover:bg-gray-100'
-                                 : 'bg-gray-900 text-white hover:bg-gray-700'
-                             }`}
+                  type="submit"
+                  disabled={isMutating}
+                  className={`px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50 flex items-center gap-2 transition-all shadow-sm ${
+                    isDark
+                      ? 'bg-orange-600 text-white hover:bg-orange-700 disabled:bg-gray-700'
+                      : 'bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-400'
+                  }`}
                 >
                   {isMutating && <Loader2 size={16} className="animate-spin" />}
                   {isEditing ? 'Saqlash' : "Qo'shish"}

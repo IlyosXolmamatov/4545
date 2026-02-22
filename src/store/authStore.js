@@ -27,7 +27,9 @@ const normalizeUser = (decoded) => {
     decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
   const role =
     typeof roleRaw === 'number' ? roleRaw :
-    typeof roleRaw === 'string' ? (ROLE_MAP[roleRaw] ?? 0) : 0;
+      typeof roleRaw === 'string' ? (ROLE_MAP[roleRaw] ?? 0) : 0;
+
+  console.log(decoded.permission);
 
   // User ID: turli claim nomlar
   const id =
@@ -55,11 +57,13 @@ const ROLE_PERMISSIONS = {
 
   // Ofitsant
   2: [
+
     'Product_Read', 'Products_Read',
-    'Order_Create', 'Order_Read', 'Order_My_Read',
-    'Order_ItemIncrease', 'Order_BusyTables',
+    'Order_Create', 'Order_Read',
+    'Order_My_Read', 'Order_ItemIncrease',
+    'Order_TableChange', 'Order_BusyTables',
     'Table_Read', 'Tables_Read',
-    'Category_Read', 'Categories_Read',
+    'Category_Read', 'Categories_Read'
   ],
 
   // Kassir
@@ -69,23 +73,24 @@ const ROLE_PERMISSIONS = {
     'Order_StatusChange', 'Order_ItemIncrease', 'Order_ItemDecrease',
     'Table_Read', 'Tables_Read', 'Table_Create', 'Table_Update', 'Table_Delete',
     'Category_Read', 'Categories_Read', 'Category_Create', 'Category_Update', 'Category_Delete',
-    'User_Read', 'Users_Read', 'User_Create',
+    'User_Read', 'Users_Read', 'User_Create'
+
   ],
 };
 
 // ─── STORE ───────────────────────────────────────────────────────────────────
 
 export const useAuthStore = create((set, get) => ({
-  user:            null,
-  token:           null,
+  user: null,
+  token: null,
   isAuthenticated: false,
-  isLoading:       true,
+  isLoading: true,
 
   // ── Login ──
   login: async (username, password) => {
-    const data    = await authAPI.login(username, password);
+    const data = await authAPI.login(username, password);
     const decoded = authAPI.decodeToken(data.access_token);
-    const user    = normalizeUser(decoded);
+    const user = normalizeUser(decoded);
 
     localStorage.setItem('access_token', data.access_token);
     localStorage.setItem('user_data', JSON.stringify(user));
@@ -103,7 +108,7 @@ export const useAuthStore = create((set, get) => ({
 
   // ── Token'dan tiklash (page refresh) ──
   initAuth: () => {
-    const token    = localStorage.getItem('access_token');
+    const token = localStorage.getItem('access_token');
     const userData = localStorage.getItem('user_data');
 
     if (token && authAPI.isTokenValid(token) && userData) {
@@ -117,8 +122,8 @@ export const useAuthStore = create((set, get) => ({
   },
 
   // ── Role tekshiruv ──
-  isAdmin:   () => get().user?.role === 1,
-  isWaiter:  () => get().user?.role === 2,
+  isAdmin: () => get().user?.role === 1,
+  isWaiter: () => get().user?.role === 2,
   isCashier: () => get().user?.role === 3,
 
   // ── Role nomi ──

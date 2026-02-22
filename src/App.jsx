@@ -13,6 +13,7 @@ import LoginPage from './pages/LoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 import UsersPage from './pages/UsersPage';
 import MenuPage from './pages/MenuPage';
+import CategoriesPage from './pages/MenuPage';
 import TablesPage from './pages/TablesPage';
 import OrdersPage from './pages/OrdersPage';
 import POSTerminal from './pages/POSTerminal';
@@ -58,6 +59,14 @@ function App() {
               element={
                 <ProtectedRoute permission="Product_Read">
                   <MenuPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/categories"
+              element={
+                <ProtectedRoute permission="Category_Read">
+                  <CategoriesPage />
                 </ProtectedRoute>
               }
             />

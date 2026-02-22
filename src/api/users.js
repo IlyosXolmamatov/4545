@@ -4,14 +4,14 @@ import api from './axios';
 
 /** @enum {number} */
 export const UserRole = {
-  Admin:   1,
-  Waiter:  2,
+  Admin: 1,
+  Waiter: 2,
   Cashier: 3,
 };
 
 export const ROLE_LABELS = {
-  [UserRole.Admin]:   'Admin',
-  [UserRole.Waiter]:  'Ofitsant',
+  [UserRole.Admin]: 'Admin',
+  [UserRole.Waiter]: 'Ofitsant',
   [UserRole.Cashier]: 'Kassir',
 };
 

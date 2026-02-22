@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, Printer, Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
-import { orderAPI, OrderStatus, OrderType, ORDER_STATUS_COLORS } from '../api/orders';
+import { orderAPI, OrderStatus, ORDER_STATUS_COLORS, ORDER_TYPE_LABELS, ORDER_STATUS_LABELS } from '../api/orders';
+import { useAuthStore } from '../store/authStore';
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -18,10 +20,7 @@ const formatDate = (d) => {
 
 const formatPrice = (n) => `${(n || 0).toLocaleString('ru-RU')} so'm`;
 
-const ORDER_TYPE_LABELS = {
-  [OrderType.DineIn]: 'Ichida',
-  [OrderType.TakeOut]: 'Olib ketish',
-};
+
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 
@@ -30,12 +29,28 @@ const ORDER_TYPE_LABELS = {
  */
 export default function OrderViewModal({ order, onClose }) {
   const isOpen = !!order;
+  const queryClient = useQueryClient();
+  const { hasPermission } = useAuthStore();
 
   // GetById orqali to'liq detail — waiterName, tableNumber, createdAt olish uchun
   const { data: detail, isLoading } = useQuery({
     queryKey: ['order', order?.id],
     queryFn:  () => orderAPI.getById(order.id),
     enabled:  isOpen && !!order?.id,
+  });
+
+  const changeStatusMutation = useMutation({
+    mutationFn: (status) => orderAPI.changeStatus(order.id, status),
+    onSuccess: (_, status) => {
+      queryClient.invalidateQueries(['order', order?.id]);
+      queryClient.invalidateQueries(['orders']);
+      queryClient.invalidateQueries(['orders', 'my-active']);
+      toast.success(status === OrderStatus.Finished ? "To'lov qabul qilindi!" : 'Status yangilandi');
+      if (status === OrderStatus.Finished || status === OrderStatus.LegacyCancelled || status === OrderStatus.Cancelled) {
+        onClose();
+      }
+    },
+    onError: () => toast.error('Statusni yangilashda xatolik'),
   });
 
   if (!isOpen) return null;
@@ -105,26 +120,17 @@ export default function OrderViewModal({ order, onClose }) {
 
             {/* ── MAHSULOTLAR ── */}
             <div className="flex-1 overflow-y-auto px-5 py-4">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
-                Mahsulotlar ({current.items?.length ?? 0})
-              </p>
-              <div className="space-y-3">
+              <p className="text-xs text-orange-500 font-semibold mb-3">Mahsulotlar ({current.items?.length || 0})</p>
+              <div className="space-y-2">
                 {current.items?.map((item) => (
-                  <div key={item.id}>
-                    <div className="flex items-start justify-between gap-4">
-                      <span className="text-sm text-gray-800 dark:text-gray-200">
-                        <span className="font-semibold">{item.count}×</span> {item.productName}
-                      </span>
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                        {((item.count || 1) * (item.priceAtTime || 0)).toLocaleString('ru-RU')} so'm
-                      </span>
+                  <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.productName}</p>
+                      <p className="text-xs text-gray-500">{item.count}× @ {(item.priceAtTime || 0).toLocaleString('ru-RU')} so'm</p>
                     </div>
-                    {/* Kelajakda extension products qo'shilganda ishlaydi */}
-                    {item.extensionProducts?.length > 0 && (
-                      <p className="text-xs text-orange-500 mt-0.5 pl-2">
-                        +{item.extensionProducts.map((e) => e.name).join(', ')}
-                      </p>
-                    )}
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {((item.count || 1) * (item.priceAtTime || 0)).toLocaleString('ru-RU')} so'm
+                    </p>
                   </div>
                 ))}
               </div>
@@ -141,16 +147,92 @@ export default function OrderViewModal({ order, onClose }) {
             </div>
 
             {/* ── FOOTER ── */}
-            <div className="flex gap-3 px-5 pb-5 pt-3">
-              <button
-                onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300
-                           font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                Yopish
-              </button>
-              <button
-                onClick={() => window.print()}
+            <div className="flex flex-col gap-3 px-5 pb-5 pt-3">
+              {/* STATUS CHANGE */}
+              {current.orderStatus !== OrderStatus.Finished && 
+               current.orderStatus !== OrderStatus.LegacyCancelled && 
+               current.orderStatus !== OrderStatus.Cancelled &&
+               hasPermission('Order_StatusChange') && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      if (confirm("To'lovni qabul qilasizmi?"))
+                        changeStatusMutation.mutate(OrderStatus.Finished);
+                    }}
+                    disabled={changeStatusMutation.isPending}
+                    className="flex-1 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                  >
+                    {changeStatusMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
+                    {current.orderType === 1 ? "To'lovni qabul qilish" : 'Yakunlash'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm("Buyurtmani bekor qilasizmi?"))
+                        changeStatusMutation.mutate(OrderStatus.LegacyCancelled);
+                    }}
+                    disabled={changeStatusMutation.isPending}
+                    className="flex-1 py-2.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 text-red-600 border border-red-200 dark:border-red-800 rounded-xl text-sm font-semibold disabled:opacity-50"
+                  >
+                    Bekor qilish
+                  </button>
+                </div>
+              )}
+
+              {/* ACTION BUTTONS */}
+              <div className="flex gap-3">
+                <button
+                  onClick={onClose}
+                  className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300
+                             font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Yopish
+                </button>
+                <button
+                onClick={() => {
+                  try {
+                    const statusLabel = ORDER_STATUS_LABELS[current.orderStatus] ?? '';
+                    const html = `
+                      <html>
+                        <head>
+                          <title>Buyurtma #${current.sku}</title>
+                          <style>
+                            body{ font-family: Arial, Helvetica, sans-serif; padding:20px }
+                            h1{ font-size:20px }
+                            table{ width:100%; border-collapse:collapse; margin-top:12px }
+                            td,th{ padding:8px; border-bottom:1px solid #eee }
+                          </style>
+                        </head>
+                        <body>
+                          <h1>Buyurtma #${current.sku}</h1>
+                          <p>Status: ${statusLabel}</p>
+                          <p>Stol: ${tableNum ? '#'+tableNum : 'TakeOut'}</p>
+                          <p>Ofitsant: ${waiterName}</p>
+                          <p>Vaqt: ${formatDate(createdAt)}</p>
+                          <table>
+                            <thead><tr><th>Mahsulot</th><th>Soni</th><th>Narx</th></tr></thead>
+                            <tbody>
+                              ${ (current.items || []).map(i => `<tr><td>${i.productName}</td><td>${i.count}</td><td>${(i.priceAtTime||0).toLocaleString('ru-RU')} so'm</td></tr>`).join('') }
+                            </tbody>
+                          </table>
+                          <p style="margin-top:12px; font-weight:bold">Jami: ${formatPrice(current.totalAmount)}</p>
+                        </body>
+                      </html>`;
+
+                    const printWindow = window.open('', '_blank', 'width=600,height=800');
+                    if (printWindow) {
+                      printWindow.document.open();
+                      printWindow.document.write(html);
+                      printWindow.document.close();
+                      printWindow.focus();
+                      setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
+                    } else {
+                      window.print();
+                    }
+                  } catch (e) {
+                    console.error('Print error', e);
+                    window.print();
+                  }
+                }}
                 className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white font-medium
                            text-sm hover:bg-orange-600 transition-colors flex items-center
                            justify-center gap-2"
@@ -159,6 +241,8 @@ export default function OrderViewModal({ order, onClose }) {
                 Chop etish
               </button>
             </div>
+            </div>
+
           </>
         )}
 

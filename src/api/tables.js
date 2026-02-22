@@ -4,14 +4,18 @@ import axiosClient from './axios';
 
 /** @enum {number} */
 export const TableStatus = {
-  Free: 1, // Bo'sh
-  Occupied: 2, // Band
-  Reserved: 3, // Rezerv
+  // Backend enum uses: Empty=1, NotEmpty=2, Reserved=3
+  Empty: 1,
+  NotEmpty: 2,
+  Reserved: 3,
+  // Backwards-compatible aliases
+  Free: 1,
+  Occupied: 2,
 };
 
 export const TABLE_STATUS_LABELS = {
-  [TableStatus.Free]: 'Bo\'sh',
-  [TableStatus.Occupied]: 'Band',
+  [TableStatus.Empty]: 'Bo\'sh',
+  [TableStatus.NotEmpty]: 'Band',
   [TableStatus.Reserved]: 'Rezerv',
 };
 
@@ -70,7 +74,6 @@ export const tableAPI = {
    */
   getAll: async () => {
     const response = await axiosClient.get('/Table/GetAllTables');
-    console.log(response.data);
     return response.data;
   },
 
@@ -90,11 +93,15 @@ export const tableAPI = {
    * @param {{ tableNumber: number, tableStatus: number, tableType: number }} data
    * @returns {Promise<boolean>}
    */
-  create: async ({ tableNumber, tableStatus, tableType }) => {
+  create: async ({ tableNumber, tableStatus, tableType, capacity, waiterName }) => {
     const response = await axiosClient.post('/Table/CreateTable', {
       tableNumber,
       tableStatus,
       tableType,
+      // backend may now accept capacity and waiterName
+      // include them when present (caller should pass if available)
+      ...(capacity !== undefined && { capacity: Number(capacity) }),
+      ...(waiterName !== undefined && { waiterName }),
     });
     return response.data;
   },
@@ -104,12 +111,16 @@ export const tableAPI = {
    * PUT /Table/UpdateTable
    * @param {{ id: string, tableNumber: number, tableStatus: number, tableType: number }} data
    */
-  update: async ({ id, tableNumber, tableStatus, tableType }) => {
+  update: async ({ id, tableNumber, tableStatus, tableType, capacity, waiterName }) => {
     const payload = {
       id,
       tableNumber: Number(tableNumber),
       tableStatus: Number(tableStatus),
       tableType: Number(tableType),
+      // capacity and waiterName may be provided by frontend
+      // include them if present in the caller payload
+      ...(capacity !== undefined && { capacity: Number(capacity) }),
+      ...(waiterName !== undefined && { waiterName }),
     };
     console.log('Update table request:', payload);
     const response = await axiosClient.put('/Table/UpdateTable', payload);

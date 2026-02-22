@@ -8,10 +8,11 @@ export const categoryAPI = {
   },
 
   // 2. CREATE (Qo'shish)
-  create: async (text) => {
+  create: async (data) => {
+    const payload = typeof data === 'string' ? { name: data } : { name: data.name };
     const response = await axiosClient.post(
       '/Category/AddCategory',
-      JSON.stringify(text),
+      payload,
       {
         headers: {
           'Content-Type': 'application/json'
@@ -24,10 +25,10 @@ export const categoryAPI = {
   // 3. UPDATE (Yangilash)
 
   update: async ({ id, name }) => {
-    const response = await axiosClient.put('/Category/UpdateCatigory', {
-      id: id,
-      name: name,
-
+    // NOTE: endpoint name fixed to UpdateCategory — confirm with backend if different
+    const response = await axiosClient.put('/Category/UpdateCategory', {
+      id,
+      name,
     });
     return response.data;
   },

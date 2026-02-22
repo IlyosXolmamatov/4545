@@ -9,9 +9,11 @@ const applyTheme = (isDark) => {
 };
 
 export const useThemeStore = create((set) => {
-  // localStorage dan boshlang'ich qiymat
+  // localStorage → yo'q bo'lsa tizim preferenceni tekshir
   const saved = localStorage.getItem('theme');
-  const initial = saved ? saved === 'dark' : false;
+  const initial = saved
+    ? saved === 'dark'
+    : window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
   applyTheme(initial);
 
   return {

@@ -43,12 +43,24 @@ export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null); // null = create mode
   const [formData, setFormData]       = useState(DEFAULT_FORM);
+  const [filter, setFilter]           = useState('all'); // 'all' | 'active' | 'inactive'
 
   // ── DATA ──
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['users'],
     queryFn:  userAPI.getAll,
   });
+
+  // ── FILTER & STATS ──
+  const filtered = users.filter((user) => {
+    if (filter === 'active') return user.isActive;
+    if (filter === 'inactive') return !user.isActive;
+    return true;
+  });
+
+  const total    = users.length;
+  const active   = users.filter((u) => u.isActive).length;
+  const inactive = users.filter((u) => !u.isActive).length;
 
   // ── MUTATIONS ──
   const createMutation = useMutation({
@@ -214,6 +226,44 @@ export default function UsersPage() {
         )}
       </div>
 
+      {/* ── STATS ── */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        {[
+          { label: 'Jami',   count: total,   color: 'text-gray-800 dark:text-gray-100'  },
+          { label: 'Faol',   count: active,  color: 'text-green-600 dark:text-green-400', bold: true },
+          { label: 'Nofaol', count: inactive, color: 'text-red-600 dark:text-red-400', bold: true },
+        ].map((stat) => (
+          <div
+            key={stat.label}
+            className={`bg-white dark:bg-gray-900 rounded-2xl p-4 border ${stat.bold ? 'border-orange-200 dark:border-orange-700 shadow-md' : 'border-gray-100 dark:border-gray-700 shadow-sm'}`}
+          >
+            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium truncate">{stat.label}</p>
+            <p className={`text-3xl font-black mt-1 ${stat.color}`}>{stat.count}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* ── FILTER BUTTONS ── */}
+      <div className="flex gap-2 mb-6">
+        {[
+          { label: 'Barchasi',   value: 'all' },
+          { label: 'Faol',       value: 'active' },
+          { label: 'Nofaol',     value: 'inactive' },
+        ].map((f) => (
+          <button
+            key={f.value}
+            onClick={() => setFilter(f.value)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+              filter === f.value
+                ? 'bg-orange-500 text-white shadow-sm'
+                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-orange-300'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
+      </div>
+
       {/* ── LOADING ── */}
       {isLoading ? (
         <div className="flex justify-center items-center py-24">
@@ -221,7 +271,7 @@ export default function UsersPage() {
         </div>
 
       /* ── EMPTY STATE ── */
-      ) : users.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-gray-400">
           <Users size={56} className="mb-4 opacity-40" />
           <p className="text-lg font-medium mb-4">Hali xodimlar yo'q</p>
@@ -253,7 +303,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {users.map((user, idx) => (
+                {filtered.map((user, idx) => (
                   <tr key={user.id} className="hover:bg-gray-50 transition-colors">
 
                     {/* Index */}

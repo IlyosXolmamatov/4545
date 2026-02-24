@@ -49,7 +49,8 @@ const AppLayout = () => {
           >
             <Menu size={22} />
           </button>
-          <h1 className="text-lg font-bold text-orange-500">Lazzat</h1>
+          <img src="/logo.jpg" alt="Basand" className="w-7 h-7 rounded-lg object-cover" />
+          <h1 className="text-lg font-bold text-orange-500">Basand</h1>
         </header>
 
         <main className="flex-1 overflow-y-auto">

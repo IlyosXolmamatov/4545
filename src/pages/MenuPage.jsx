@@ -10,6 +10,7 @@ import { productAPI, getImgUrl } from '../api/products';
 import { categoryAPI } from '../api/categories';
 import { useAuthStore } from '../store/authStore';
 import ToggleActiveButton from '../components/ToggleActiveButton';
+import ConfirmModal from '../components/ConfirmModal';
 
 // ─── CATEGORY MODAL ───────────────────────────────────────────────────────────
 const CategoryModal = ({ editing, onClose, onSuccess }) => {
@@ -280,6 +281,7 @@ const ProductModal = ({ editing, categories, onClose, onSuccess }) => {
 const MenuPage = () => {
   const queryClient = useQueryClient();
   const { hasPermission } = useAuthStore();
+  const [dlg, setDlg] = useState(null);
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -440,9 +442,11 @@ const MenuPage = () => {
               )}
               {hasPermission('Category_Delete') && (
                 <button
-                  onClick={() => {
-                    if (confirm(`"${cat.name}" o'chirilsinmi?`)) deleteCatMutation.mutate(cat.id);
-                  }}
+                  onClick={() => setDlg({
+                    message: `"${cat.name}" kategoriyasi o'chirilsinmi?`,
+                    confirmText: "Ha, o'chirish",
+                    onConfirm: () => deleteCatMutation.mutate(cat.id),
+                  })}
                   className={`px-2 py-2 rounded-r-xl text-xs border transition-colors ${
                     isActive
                       ? 'bg-gray-800 text-white border-gray-900 hover:bg-red-600 hover:border-red-600'
@@ -508,9 +512,11 @@ const MenuPage = () => {
                     )}
                     {hasPermission('Product_Delete') && (
                       <button
-                        onClick={() => {
-                          if (confirm("Mahsulot o'chirilsinmi?")) deleteProdMutation.mutate(product.id);
-                        }}
+                        onClick={() => setDlg({
+                          message: `"${product.name}" mahsuloti o'chirilsinmi?`,
+                          confirmText: "Ha, o'chirish",
+                          onConfirm: () => deleteProdMutation.mutate(product.id),
+                        })}
                         className="p-2 bg-white rounded-xl shadow hover:text-red-600 transition-colors"
                       >
                         <Trash2 size={16} />
@@ -569,6 +575,14 @@ const MenuPage = () => {
           onSuccess={() => setProdModal(null)}
         />
       )}
+      <ConfirmModal
+        open={!!dlg}
+        message={dlg?.message}
+        confirmText={dlg?.confirmText}
+        danger={dlg?.danger ?? true}
+        onConfirm={() => { dlg?.onConfirm?.(); setDlg(null); }}
+        onCancel={() => setDlg(null)}
+      />
     </div>
   );
 };

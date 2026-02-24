@@ -69,7 +69,7 @@ const ROLE_PERMISSIONS = {
   // Kassir
   3: [
     'Product_Read', 'Products_Read', 'Product_Create', 'Product_Update',
-    'Order_Read', 'Orders_Read', 'Order_Create', 'Order_Update',
+    'Order_Read', 'Orders_Read', 'Order_Create', 'Order_Update', 'Order_Delete',
     'Order_StatusChange', 'Order_ItemIncrease', 'Order_ItemDecrease',
     'Table_Read', 'Tables_Read', 'Table_Create', 'Table_Update', 'Table_Delete',
     'Category_Read', 'Categories_Read', 'Category_Create', 'Category_Update', 'Category_Delete',

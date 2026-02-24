@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, Printer, Loader2 } from 'lucide-react';
+import { X, Printer, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 import { orderAPI, OrderStatus, ORDER_STATUS_COLORS, ORDER_TYPE_LABELS, ORDER_STATUS_LABELS } from '../api/orders';
 import { useAuthStore } from '../store/authStore';
+import ConfirmModal from './ConfirmModal';
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -31,6 +33,7 @@ export default function OrderViewModal({ order, onClose }) {
   const isOpen = !!order;
   const queryClient = useQueryClient();
   const { hasPermission } = useAuthStore();
+  const [dlg, setDlg] = useState(null);
 
   // GetById orqali to'liq detail — waiterName, tableNumber, createdAt olish uchun
   const { data: detail, isLoading } = useQuery({
@@ -46,11 +49,23 @@ export default function OrderViewModal({ order, onClose }) {
       queryClient.invalidateQueries(['orders']);
       queryClient.invalidateQueries(['orders', 'my-active']);
       toast.success(status === OrderStatus.Finished ? "To'lov qabul qilindi!" : 'Status yangilandi');
-      if (status === OrderStatus.Finished || status === OrderStatus.LegacyCancelled || status === OrderStatus.Cancelled) {
+      if (status === OrderStatus.Finished || status === OrderStatus.Cancelled) {
         onClose();
       }
     },
     onError: () => toast.error('Statusni yangilashda xatolik'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => orderAPI.delete(order.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['orders']);
+      queryClient.invalidateQueries(['orders', 'my-active']);
+      queryClient.invalidateQueries(['tables']);
+      toast.success("Buyurtma o'chirildi");
+      onClose();
+    },
+    onError: () => toast.error("O'chirishda xatolik"),
   });
 
   if (!isOpen) return null;
@@ -149,16 +164,17 @@ export default function OrderViewModal({ order, onClose }) {
             {/* ── FOOTER ── */}
             <div className="flex flex-col gap-3 px-5 pb-5 pt-3">
               {/* STATUS CHANGE */}
-              {current.orderStatus !== OrderStatus.Finished && 
-               current.orderStatus !== OrderStatus.LegacyCancelled && 
+              {current.orderStatus !== OrderStatus.Finished &&
                current.orderStatus !== OrderStatus.Cancelled &&
                hasPermission('Order_StatusChange') && (
                 <div className="flex gap-2">
                   <button
-                    onClick={() => {
-                      if (confirm("To'lovni qabul qilasizmi?"))
-                        changeStatusMutation.mutate(OrderStatus.Finished);
-                    }}
+                    onClick={() => setDlg({
+                      message: "To'lovni qabul qilasizmi?",
+                      confirmText: "Ha, qabul qilish",
+                      danger: false,
+                      onConfirm: () => changeStatusMutation.mutate(OrderStatus.Finished),
+                    })}
                     disabled={changeStatusMutation.isPending}
                     className="flex-1 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
                   >
@@ -166,16 +182,43 @@ export default function OrderViewModal({ order, onClose }) {
                     {current.orderType === 1 ? "To'lovni qabul qilish" : 'Yakunlash'}
                   </button>
                   <button
-                    onClick={() => {
-                      if (confirm("Buyurtmani bekor qilasizmi?"))
-                        changeStatusMutation.mutate(OrderStatus.LegacyCancelled);
-                    }}
+                    onClick={() => setDlg({
+                      message: "Buyurtmani bekor qilasizmi? Bu amalni qaytarib bo'lmaydi.",
+                      confirmText: "Ha, bekor qilish",
+                      danger: true,
+                      onConfirm: () => changeStatusMutation.mutate(OrderStatus.Cancelled),
+                    })}
                     disabled={changeStatusMutation.isPending}
                     className="flex-1 py-2.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 text-red-600 border border-red-200 dark:border-red-800 rounded-xl text-sm font-semibold disabled:opacity-50"
                   >
                     Bekor qilish
                   </button>
                 </div>
+              )}
+
+              {/* DELETE */}
+              {hasPermission('Order_Delete') && (
+                <button
+                  onClick={() => setDlg({
+                    title: `Buyurtma #${current.sku}`,
+                    message: "Buyurtma bazadan butunlay o'chiriladi. Bu amalni qaytarib bo'lmaydi.",
+                    confirmText: "Ha, o'chirish",
+                    danger: true,
+                    onConfirm: () => deleteMutation.mutate(),
+                  })}
+                  disabled={deleteMutation.isPending}
+                  className="w-full py-2.5 flex items-center justify-center gap-2 rounded-xl
+                             border border-red-200 dark:border-red-800
+                             bg-red-50 dark:bg-red-900/20
+                             hover:bg-red-100 dark:hover:bg-red-900/40
+                             text-red-600 dark:text-red-400
+                             text-sm font-semibold transition-colors disabled:opacity-50"
+                >
+                  {deleteMutation.isPending
+                    ? <Loader2 size={14} className="animate-spin" />
+                    : <Trash2 size={14} />}
+                  Buyurtmani o'chirish
+                </button>
               )}
 
               {/* ACTION BUTTONS */}
@@ -247,6 +290,15 @@ export default function OrderViewModal({ order, onClose }) {
         )}
 
       </div>
+
+      <ConfirmModal
+        open={!!dlg}
+        message={dlg?.message}
+        confirmText={dlg?.confirmText}
+        danger={dlg?.danger ?? true}
+        onConfirm={() => { dlg?.onConfirm?.(); setDlg(null); }}
+        onCancel={() => setDlg(null)}
+      />
     </div>
   );
 }

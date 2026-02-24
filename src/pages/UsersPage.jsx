@@ -9,6 +9,7 @@ import {
 import { userAPI, UserRole, ROLE_LABELS } from '../api/users';
 import { useAuthStore } from '../store/authStore';
 import ToggleActiveButton from '../components/ToggleActiveButton';
+import ConfirmModal from '../components/ConfirmModal';
 
 // --- BADGE COMPONENTS ---
 
@@ -38,6 +39,7 @@ const DEFAULT_FORM = {
 export default function UsersPage() {
   const queryClient  = useQueryClient();
   const { hasPermission } = useAuthStore();
+  const [dlg, setDlg] = useState(null);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -199,8 +201,11 @@ export default function UsersPage() {
 
   // ── DELETE ──
   const handleDelete = (user) => {
-    if (!confirm(`"${user.name}" xodimi o'chirilsinmi?`)) return;
-    deleteMutation.mutate(user.id);
+    setDlg({
+      message: `"${user.name}" xodimi o'chirilsinmi?`,
+      confirmText: "Ha, o'chirish",
+      onConfirm: () => deleteMutation.mutate(user.id),
+    });
   };
 
   const isMutating = createMutation.isPending || updateMutation.isPending;
@@ -530,6 +535,14 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+      <ConfirmModal
+        open={!!dlg}
+        message={dlg?.message}
+        confirmText={dlg?.confirmText}
+        danger={dlg?.danger ?? true}
+        onConfirm={() => { dlg?.onConfirm?.(); setDlg(null); }}
+        onCancel={() => setDlg(null)}
+      />
     </div>
   );
 }

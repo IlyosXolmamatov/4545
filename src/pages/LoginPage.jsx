@@ -32,13 +32,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo / Branding */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl mb-4 shadow-lg">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-2xl mb-4 shadow-lg overflow-hidden">
+            <img src="/logo.jpg" alt="Basand" className="w-full h-full object-cover" />
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-            Lazzat Restaurant
+            Basand
           </h1>
           <p className="text-gray-600 mt-2">Ichki boshqaruv tizimi</p>
         </div>
@@ -95,7 +93,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div className="text-center mt-6 text-sm text-gray-500">
-          © 2025 Lazzat Restaurant. Barcha huquqlar himoyalangan.
+          © 2025 Basand. Barcha huquqlar himoyalangan.
         </div>
       </div>
     </div>

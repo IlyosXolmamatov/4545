@@ -4,25 +4,21 @@ import api from './axios';
 
 /** @enum {number} */
 export const OrderStatus = {
-  // Backend enum: Accepted=1, Canselled=2, Finished=3
+  // Backend enum: Accepted=1, Cancelled=2, Finished=3
   1: 'Accepted',
   2: 'Cancelled',
   3: 'Finished',
-  // Keep legacy 0 mapping for any older data
-  0: 'Cancelled',
 };
 
-// Also expose numeric constants for code that expects OrderStatus.Finished etc.
+// Numeric constants
 OrderStatus.Accepted = 1;
 OrderStatus.Cancelled = 2;
 OrderStatus.Finished = 3;
-OrderStatus.LegacyCancelled = 0;
 
 export const ORDER_STATUS_COLORS = {
-  1: 'bg-blue-100 text-blue-700',
-  2: 'bg-green-100 text-green-700',
-  3: 'bg-orange-100 text-orange-700',
-  0: 'bg-red-100 text-red-700',
+  1: 'bg-blue-100 text-blue-700',    // Accepted
+  2: 'bg-red-100 text-red-700',      // Cancelled
+  3: 'bg-green-100 text-green-700',  // Finished
 };
 
 // Backward compatibility aliases
@@ -78,7 +74,9 @@ export const orderAPI = {
    * @param {{ userId: string, tableId: string|null, orderType: number, items: {productId:string, count:number}[] }} data
    */
   create: async (data) => {
+    console.log(data);
     const res = await api.post('/Order/Create', data);
+
     return res.data;
   },
 
@@ -127,14 +125,23 @@ export const orderAPI = {
    * MUHIM: status faqat 1, 2, 3 bo'lishi mumkin (0 ga o'tkazib bo'lmaydi!)
    */
   changeStatus: async (orderId, status) => {
-    if (![0, 1, 2, 3].includes(Number(status))) {
-      throw new Error('Status faqat 0, 1, 2, 3 qiymatlarni qabul qiladi');
+    if (![1, 2, 3].includes(Number(status))) {
+      throw new Error('Status faqat  1, 2, 3 qiymatlarni qabul qiladi');
     }
     const res = await api.patch(
       `/Order/ChangeStatus/${orderId}/status`,
       null,
       { params: { status } }
     );
+    return res.data;
+  },
+
+  /**
+   * Buyurtmani o'chirish (to'liq DB dan)
+   * DELETE /Order/Delete/{orderId}
+   */
+  delete: async (orderId) => {
+    const res = await api.delete(`/Order/Delete/${orderId}`);
     return res.data;
   },
 

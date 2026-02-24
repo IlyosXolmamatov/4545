@@ -16,6 +16,7 @@ import {
 } from '../api/orders';
 import { tableAPI } from '../api/tables';
 import { useAuthStore } from '../store/authStore';
+import ConfirmModal from './ConfirmModal';
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -34,6 +35,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
 
   const [changeTableMode, setChangeTableMode] = useState(false);
   const [newTableId, setNewTableId] = useState(null);
+  const [dlg, setDlg] = useState(null);
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', orderId],
@@ -54,16 +56,64 @@ const OrderDetailModal = ({ orderId, onClose }) => {
     queryClient.invalidateQueries(['tables']);
   };
 
+  // qaysi productId pending ekanligini alohida kuzatish
+  const [pendingIncrease, setPendingIncrease] = useState(null);
+  const [pendingDecrease, setPendingDecrease] = useState(null);
+
   const increaseItemMutation = useMutation({
-    mutationFn: ({ productId, count }) => orderAPI.increaseItem(orderId, productId, count),
-    onSuccess: invalidate,
-    onError: () => toast.error('Oshirishda xatolik'),
+    mutationFn: ({ productId, count }) => {
+      setPendingIncrease(productId);
+      return orderAPI.increaseItem(orderId, productId, count);
+    },
+    onMutate: async ({ productId, count }) => {
+      await queryClient.cancelQueries(['order', orderId]);
+      const previous = queryClient.getQueryData(['order', orderId]);
+      queryClient.setQueryData(['order', orderId], (old) => {
+        if (!old) return old;
+        const items = (old.items || []).map(i =>
+          i.productId === productId ? { ...i, count: i.count + count } : i
+        );
+        const total = items.reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0);
+        return { ...old, items, totalAmount: total };
+      });
+      return { previous };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['order', orderId], ctx.previous);
+      toast.error('Oshirishda xatolik');
+    },
+    onSettled: (_, __, { productId }) => {
+      setPendingIncrease(null);
+      invalidate();
+    },
   });
 
   const decreaseItemMutation = useMutation({
-    mutationFn: ({ productId, count }) => orderAPI.decreaseItem(orderId, productId, count),
-    onSuccess: invalidate,
-    onError: () => toast.error('Kamaytirishda xatolik'),
+    mutationFn: ({ productId, count }) => {
+      setPendingDecrease(productId);
+      return orderAPI.decreaseItem(orderId, productId, count, 'Kamaytirish');
+    },
+    onMutate: async ({ productId, count }) => {
+      await queryClient.cancelQueries(['order', orderId]);
+      const previous = queryClient.getQueryData(['order', orderId]);
+      queryClient.setQueryData(['order', orderId], (old) => {
+        if (!old) return old;
+        const items = (old.items || [])
+          .map(i => i.productId === productId ? { ...i, count: Math.max(0, i.count - count) } : i)
+          .filter(i => i.count > 0);
+        const total = items.reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0);
+        return { ...old, items, totalAmount: total };
+      });
+      return { previous };
+    },
+    onError: (_, __, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['order', orderId], ctx.previous);
+      toast.error('Kamaytirishda xatolik');
+    },
+    onSettled: (_, __, { productId }) => {
+      setPendingDecrease(null);
+      invalidate();
+    },
   });
 
   const deleteItemMutation = useMutation({
@@ -86,11 +136,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
     onSuccess: (_, status) => {
       invalidate();
       toast.success(status === OrderStatus.Finished ? "To'lov qabul qilindi!" : 'Status yangilandi');
-      if (
-        status === OrderStatus.Finished ||
-        status === OrderStatus.LegacyCancelled ||
-        status === OrderStatus.Cancelled
-      ) onClose();
+      if (status === OrderStatus.Finished || status === OrderStatus.Cancelled) onClose();
     },
     onError: () => toast.error('Statusni yangilashda xatolik'),
   });
@@ -107,7 +153,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
   });
 
   const isFinished = order?.orderStatus === OrderStatus.Finished;
-  const isCancelled = order?.orderStatus === OrderStatus.LegacyCancelled || order?.orderStatus === OrderStatus.Cancelled;
+  const isCancelled = order?.orderStatus === OrderStatus.Cancelled;
   const isLocked = isFinished || isCancelled;
   const currentTableId = tables.find(t => t.tableNumber === order?.tableNumber)?.id ?? null;
 
@@ -245,31 +291,35 @@ const OrderDetailModal = ({ orderId, onClose }) => {
                           {hasPermission('Order_ItemDecrease') && (
                             <button
                               onClick={() => decreaseItemMutation.mutate({ productId: item.productId, count: 1 })}
-                              disabled={decreaseItemMutation.isPending}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-red-100 hover:text-red-600"
+                              disabled={pendingDecrease === item.productId || pendingIncrease === item.productId}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-red-100 hover:text-red-600 disabled:opacity-40"
                               title="Miqdorni kamaytirish"
                             >
-                              <Minus size={12} />
+                              {pendingDecrease === item.productId
+                                ? <Loader2 size={10} className="animate-spin" />
+                                : <Minus size={12} />}
                             </button>
                           )}
                           <span className="w-6 text-center text-sm font-bold">{item.count}</span>
                           {hasPermission('Order_ItemIncrease') && (
                             <button
                               onClick={() => increaseItemMutation.mutate({ productId: item.productId, count: 1 })}
-                              disabled={increaseItemMutation.isPending}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-green-100 hover:text-green-600"
+                              disabled={pendingIncrease === item.productId || pendingDecrease === item.productId}
+                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-green-100 hover:text-green-600 disabled:opacity-40"
                               title="Miqdorni oshirish"
                             >
-                              <Plus size={12} />
+                              {pendingIncrease === item.productId
+                                ? <Loader2 size={10} className="animate-spin" />
+                                : <Plus size={12} />}
                             </button>
                           )}
                           {(hasPermission('Order_ItemDecrease') || hasPermission('Order_Delete')) && (
                             <button
-                              onClick={() => {
-                                if (confirm(`"${item.productName}" o'chirilsinmi?`)) {
-                                  deleteItemMutation.mutate(item.productId);
-                                }
-                              }}
+                              onClick={() => setDlg({
+                                message: `"${item.productName}" buyurtmadan o'chirilsinmi?`,
+                                confirmText: "Ha, o'chirish",
+                                onConfirm: () => deleteItemMutation.mutate(item.productId),
+                              })}
                               disabled={deleteItemMutation.isPending}
                               className="w-7 h-7 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-100 hover:text-red-600 ml-1"
                               title="Mahsulotni to'liq o'chirish"
@@ -310,6 +360,15 @@ const OrderDetailModal = ({ orderId, onClose }) => {
           </>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!dlg}
+        message={dlg?.message}
+        confirmText={dlg?.confirmText}
+        danger={dlg?.danger ?? true}
+        onConfirm={() => { dlg?.onConfirm?.(); setDlg(null); }}
+        onCancel={() => setDlg(null)}
+      />
     </div>
   );
 };

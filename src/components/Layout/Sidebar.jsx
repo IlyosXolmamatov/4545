@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useThemeStore } from '../../store/themeStore';
+import ConfirmModal from '../ConfirmModal';
 import {
   Home, Users, ShoppingBag, Table2,
   ShoppingCart, CreditCard, LogOut, X, Sun, Moon,
@@ -30,11 +32,19 @@ const Sidebar = ({ isOpen, onClose }) => {
     item.permission === null ? true : hasPermission(item.permission)
   );
 
+  const [dlg, setDlg] = useState(null);
+
   const handleLogout = () => {
-    if (confirm('Tizimdan chiqmoqchimisiz?')) logout();
+    setDlg({
+      message: 'Tizimdan chiqmoqchimisiz?',
+      confirmText: 'Ha, chiqish',
+      danger: false,
+      onConfirm: logout,
+    });
   };
 
   return (
+    <>
     <aside
       className={`
         fixed inset-y-0 left-0 z-30 w-64 flex flex-col h-screen flex-shrink-0
@@ -46,12 +56,15 @@ const Sidebar = ({ isOpen, onClose }) => {
       `}
     >
       {/* ── Logo ── */}
-      <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-orange-500">Lazzat</h1>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 font-medium uppercase tracking-wide">
-            {getPanelName()}
-          </p>
+      <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <img src="/logo.jpg" alt="Basand" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+          <div>
+            <h1 className="text-xl font-bold text-orange-500 leading-tight">Basand</h1>
+            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide">
+              {getPanelName()}
+            </p>
+          </div>
         </div>
         <button
           onClick={onClose}
@@ -146,6 +159,16 @@ const Sidebar = ({ isOpen, onClose }) => {
         </button>
       </div>
     </aside>
+
+    <ConfirmModal
+      open={!!dlg}
+      message={dlg?.message}
+      confirmText={dlg?.confirmText}
+      danger={dlg?.danger ?? true}
+      onConfirm={() => { dlg?.onConfirm?.(); setDlg(null); }}
+      onCancel={() => setDlg(null)}
+    />
+    </>
   );
 };
 

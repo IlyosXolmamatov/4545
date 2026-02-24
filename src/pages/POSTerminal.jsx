@@ -6,15 +6,14 @@ import {
   ShoppingCart, Plus, Minus, Trash2,
   Loader2, Package, UtensilsCrossed, ShoppingBag,
   ArrowLeft, Search, X, ClipboardList, ChevronRight,
-  MapPin, Crown, Users,
+  MapPin, Crown, Users, Clock,
 } from 'lucide-react';
 
-import { orderAPI, OrderType, ORDER_STATUS_STYLES, ORDER_STATUS_LABELS } from '../api/orders';
+import { orderAPI, OrderType } from '../api/orders';
 import { productAPI, getImgUrl } from '../api/products';
 import { categoryAPI } from '../api/categories';
 import { tableAPI, TableStatus, TableType } from '../api/tables';
 import { useAuthStore } from '../store/authStore';
-import OrderDetailModal from '../components/OrderDetailModal';
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -27,13 +26,22 @@ const getUserId = (user) => {
   );
 };
 
-// ─── STATICS ──────────────────────────────────────────────────────────────────
+const fmtTime = (d) => {
+  if (!d) return null;
+  const date = new Date(d);
+  if (date.getFullYear() < 1900) return null;
+  return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+};
+
+const nowTime = () => new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+// ─── TABLE FILTER CONFIG ──────────────────────────────────────────────────────
 
 const TABLE_TYPE_FILTERS = [
-  { value: 'all',              label: 'Hammasi', icon: null   },
-  { value: TableType.Simple,   label: 'Ichkari', icon: MapPin },
-  { value: TableType.Terrace,  label: 'Terasa',  icon: MapPin },
-  { value: TableType.VIP,      label: 'VIP',     icon: Crown  },
+  { value: 'all',             label: 'Hammasi', icon: null   },
+  { value: TableType.Simple,  label: 'Ichkari', icon: MapPin },
+  { value: TableType.Terrace, label: 'Terasa',  icon: MapPin },
+  { value: TableType.VIP,     label: 'VIP',     icon: Crown  },
 ];
 
 const TABLE_STATUS_CFG = {
@@ -42,7 +50,7 @@ const TABLE_STATUS_CFG = {
   [TableStatus.Reserved]: { label: 'Rezerv', border: 'border-amber-300 hover:border-amber-500',     num: 'text-amber-600 dark:text-amber-400',     badge: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400'   },
 };
 
-// ─── TABLE CARD (POS uchun soddalashtirilgan) ─────────────────────────────────
+// ─── TABLE CARD ───────────────────────────────────────────────────────────────
 
 const TableCard = ({ table, onClick }) => {
   const cfg = TABLE_STATUS_CFG[table.tableStatus] ?? TABLE_STATUS_CFG[TableStatus.Free];
@@ -56,12 +64,10 @@ const TableCard = ({ table, onClick }) => {
                   transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 active:scale-95
                   bg-white dark:bg-gray-900 ${cfg.border}`}
     >
-      {/* Type badge */}
       <span className="absolute top-1.5 right-1.5 text-[8px] font-bold px-1 py-0.5 rounded
                        bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 uppercase tracking-wide">
         {typeLabel}
       </span>
-
       <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-none">
         STOL
       </span>
@@ -80,25 +86,25 @@ const TableCard = ({ table, onClick }) => {
   );
 };
 
-// ─── CART ROW ─────────────────────────────────────────────────────────────────
+// ─── CART ROW (yangi itemlar uchun — tahrirlash mumkin) ───────────────────────
 
 const CartRow = ({ item, onIncrease, onDecrease, onRemove }) => (
-  <div className="flex items-center gap-2 py-3 border-b border-gray-100 dark:border-gray-800 last:border-0">
+  <div className="flex items-center gap-2 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
     <div className="flex-1 min-w-0">
       <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{item.name}</p>
       <p className="text-xs text-gray-400">{item.price.toLocaleString()} so'm × {item.count}</p>
     </div>
-    <p className="text-sm font-bold text-gray-800 dark:text-gray-100 shrink-0">
+    <p className="text-sm font-bold text-gray-800 dark:text-gray-100 shrink-0 min-w-[70px] text-right">
       {(item.price * item.count).toLocaleString()}
     </p>
     <div className="flex items-center gap-1 shrink-0">
       <button onClick={() => onDecrease(item.productId)}
-        className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 transition-colors">
+        className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
         <Minus size={12} />
       </button>
-      <span className="w-6 text-center text-sm font-bold text-gray-800 dark:text-gray-100">{item.count}</span>
+      <span className="w-5 text-center text-sm font-bold text-gray-800 dark:text-gray-100">{item.count}</span>
       <button onClick={() => onIncrease(item.productId)}
-        className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 transition-colors">
+        className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
         <Plus size={12} />
       </button>
       <button onClick={() => onRemove(item.productId)}
@@ -106,6 +112,21 @@ const CartRow = ({ item, onIncrease, onDecrease, onRemove }) => (
         <Trash2 size={12} />
       </button>
     </div>
+  </div>
+);
+
+// ─── EXISTING ITEM ROW (read-only — o'chirish/kamaytirish yo'q) ───────────────
+
+const ExistingItemRow = ({ item }) => (
+  <div className="flex items-center gap-2 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
+    <div className="flex-1 min-w-0">
+      <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">{item.productName}</p>
+      <p className="text-xs text-gray-400">{item.priceAtTime?.toLocaleString()} so'm × {item.count}</p>
+    </div>
+    <p className="text-sm font-semibold text-gray-500 dark:text-gray-500 shrink-0 min-w-[70px] text-right">
+      {((item.priceAtTime || 0) * item.count).toLocaleString()}
+    </p>
+    <div className="w-[88px] shrink-0" /> {/* alignment spacer */}
   </div>
 );
 
@@ -129,11 +150,9 @@ const ActiveOrderRow = ({ order, onClick }) => (
         {order.items?.map(i => `${i.count}× ${i.productName}`).join(', ')}
       </p>
     </div>
-    <div className="shrink-0 text-right">
-      <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
-        {order.totalAmount?.toLocaleString()} so'm
-      </p>
-    </div>
+    <p className="text-sm font-bold text-gray-800 dark:text-gray-100 shrink-0">
+      {order.totalAmount?.toLocaleString()} so'm
+    </p>
     <ChevronRight size={16} className="text-gray-300 shrink-0" />
   </button>
 );
@@ -156,32 +175,37 @@ const Drawer = ({ open, onClose, children }) => {
 
 const POSTerminal = () => {
   const queryClient = useQueryClient();
-  const { user, isCashier, isWaiter } = useAuthStore();
-  const cashier = isCashier();
-  const waiter  = isWaiter();
+  const { user, isWaiter } = useAuthStore();
+  const waiter = isWaiter();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ── Step: 'tables' | 'menu' ──
+  // ── Navigation ──
   const [step, setStep]                       = useState('tables');
   const [cartOpen, setCartOpen]               = useState(false);
   const [activeOrdersOpen, setActiveOrdersOpen] = useState(false);
-  const [editingOrderId, setEditingOrderId]   = useState(null);
+
+  // ── addMode: band stol ustiga bosish → mavjud orderga qo'shish ──
+  const [addMode, setAddMode]               = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState(null);
 
   // ── Table filter ──
   const [tableTypeFilter, setTableTypeFilter] = useState('all');
   const [tableSearch, setTableSearch]         = useState('');
 
   // ── Order state ──
-  const [cart, setCart]                       = useState([]);
-  const [selectedTableId, setSelectedTableId] = useState(null);
-  const [orderType, setOrderType]             = useState(OrderType.DineIn);
+  const [cart, setCart]                         = useState([]);
+  const [selectedTableId, setSelectedTableId]   = useState(null);
+  const [orderType, setOrderType]               = useState(OrderType.DineIn);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
-  // ── URL: orderId ──
+  // URL dan orderId (OrdersPage → POS)
   useEffect(() => {
-    const orderIdFromUrl = searchParams.get('orderId');
-    if (orderIdFromUrl) {
-      setEditingOrderId(orderIdFromUrl);
+    const id = searchParams.get('orderId');
+    if (id) {
+      setEditingOrderId(id);
+      setAddMode(true);
+      setCart([]);
+      setStep('menu');
       const np = new URLSearchParams(searchParams);
       np.delete('orderId');
       setSearchParams(np, { replace: true });
@@ -190,9 +214,9 @@ const POSTerminal = () => {
   }, []);
 
   // ── Queries ──
-  const { data: products = [],  isLoading: pLoading }      = useQuery({ queryKey: ['products'],   queryFn: productAPI.getAll });
-  const { data: categories = [] }                           = useQuery({ queryKey: ['categories'], queryFn: categoryAPI.getAll });
-  const { data: tables = [],    isLoading: tablesLoading }  = useQuery({ queryKey: ['tables'],     queryFn: tableAPI.getAll, refetchInterval: 15_000 });
+  const { data: products = [],  isLoading: pLoading }     = useQuery({ queryKey: ['products'],   queryFn: productAPI.getAll });
+  const { data: categories = [] }                          = useQuery({ queryKey: ['categories'], queryFn: categoryAPI.getAll });
+  const { data: tables = [],    isLoading: tablesLoading } = useQuery({ queryKey: ['tables'],     queryFn: tableAPI.getAll, refetchInterval: 15_000 });
 
   const { data: activeOrders = [] } = useQuery({
     queryKey: waiter ? ['orders', 'my-active'] : ['orders'],
@@ -201,34 +225,44 @@ const POSTerminal = () => {
   });
   const visibleActiveOrders = activeOrders.filter(o => o.orderStatus === 1);
 
-  const { data: editingOrder } = useQuery({
+  // addMode uchun: mavjud orderni yuklash
+  const { data: editingOrder, isLoading: editingLoading } = useQuery({
     queryKey: ['order', editingOrderId],
     queryFn:  () => orderAPI.getById(editingOrderId),
-    enabled:  !!editingOrderId,
+    enabled:  !!editingOrderId && addMode,
   });
 
-  // Mavjud buyurtma cartga yuklansin
+  // addMode + URL flow: table info ni orderdan olish
   useEffect(() => {
-    if (editingOrder && editingOrderId) {
-      setCart((editingOrder.items || []).map(item => ({
-        productId: item.productId,
-        name:      item.productName,
-        price:     item.priceAtTime || 0,
-        count:     item.count,
-      })));
+    if (editingOrder && addMode && !selectedTableId) {
       if (editingOrder.tableNumber > 0) {
         const t = tables.find(t => t.tableNumber === editingOrder.tableNumber);
         if (t) setSelectedTableId(t.id);
       }
       setOrderType(editingOrder.orderType || OrderType.DineIn);
-      setStep('menu');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingOrder, tables]);
 
   // ── Mutations ──
+
+  // 1. Yangi buyurtma yaratish
+  // Concurrency muammo bo'lsa 3 marta retry (300ms, 600ms oraliq)
   const createMutation = useMutation({
-    mutationFn: orderAPI.create,
+    mutationFn: async (data) => {
+      let lastErr;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const res = await orderAPI.create(data);
+          lastErr = null;
+          return res;
+        } catch (err) {
+          lastErr = err;
+          if (attempt < 3) await new Promise(r => setTimeout(r, 300 * attempt));
+        }
+      }
+      throw lastErr;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['orders']);
       queryClient.invalidateQueries(['orders', 'my-active']);
@@ -236,43 +270,51 @@ const POSTerminal = () => {
       toast.success("Buyurtma qabul qilindi!");
       clearAll();
     },
-    onError: (err) =>
-      toast.error(err?.response?.data?.title || err?.response?.data?.message || "Buyurtma yuborishda xatolik"),
+    onError: (err) => {
+      const detail = err?.response?.data?.detail;
+      const title  = err?.response?.data?.title || err?.response?.data?.message;
+      toast.error(detail || title || "Buyurtma yuborishda xatolik");
+    },
   });
 
-  const updateOrderMutation = useMutation({
+  // 2. Mavjud buyurtmaga mahsulot qo'shish (addMode)
+  // EF Core optimistic concurrency muammosini oldini olish uchun:
+  // har bir item ketma-ket yuboriladi, xato bo'lsa 3 marta retry (300ms oraliq)
+  const addToExistingMutation = useMutation({
     mutationFn: async () => {
-      const originalItems = editingOrder?.items || [];
-      const origMap = new Map(originalItems.map(i => [i.productId, i]));
-      const currMap = new Map(cart.map(i => [i.productId, i]));
-      const updates = [];
-
-      for (const [pid, ci] of currMap) {
-        const oi = origMap.get(pid);
-        if (!oi) { updates.push({ type: 'increase', pid, count: ci.count }); }
-        else if (oi.count !== ci.count) {
-          const d = ci.count - oi.count;
-          updates.push({ type: d > 0 ? 'increase' : 'decrease', pid, count: Math.abs(d) });
+      for (const item of cart) {
+        let lastErr;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            await orderAPI.increaseItem(editingOrderId, item.productId, item.count);
+            lastErr = null;
+            break;
+          } catch (err) {
+            lastErr = err;
+            if (attempt < 3) {
+              await new Promise(r => setTimeout(r, 300 * attempt));
+            }
+          }
         }
+        if (lastErr) throw lastErr;
       }
-      for (const [pid, oi] of origMap) {
-        if (!currMap.has(pid)) updates.push({ type: 'decrease', pid, count: oi.count });
-      }
-      for (const u of updates) {
-        if (u.type === 'increase') await orderAPI.increaseItem(editingOrderId, u.pid, u.count);
-        else await orderAPI.decreaseItem(editingOrderId, u.pid, u.count, 'Tahrir qilindi');
-      }
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries(['order', editingOrderId]);
       queryClient.invalidateQueries(['orders']);
       queryClient.invalidateQueries(['orders', 'my-active']);
-      return updates;
-    },
-    onSuccess: (updates) => {
-      toast.success(updates.length === 0 ? "O'zgarish yo'q" : "Buyurtma yangilandi!");
+      queryClient.invalidateQueries(['tables']);
+      toast.success("Mahsulotlar qo'shildi!");
       clearAll();
     },
-    onError: (err) =>
-      toast.error(err?.response?.data?.title || err?.response?.data?.message || "Yangilashda xatolik"),
+    onError: (err) => {
+      const msg = err?.response?.data?.message || err?.response?.data?.title || err?.message || '';
+      if (msg.toLowerCase().includes('concurren') || msg.toLowerCase().includes('affect')) {
+        toast.error("Buyurtma boshqa tomondan o'zgartirilgan. Iltimos qaytadan urining.");
+      } else {
+        toast.error(msg || "Qo'shishda xatolik");
+      }
+    },
   });
 
   // ── Cart helpers ──
@@ -302,6 +344,7 @@ const POSTerminal = () => {
     setOrderType(OrderType.DineIn);
     setSelectedCategory(null);
     setEditingOrderId(null);
+    setAddMode(false);
     setCartOpen(false);
     setStep('tables');
   };
@@ -311,11 +354,20 @@ const POSTerminal = () => {
     [cart]
   );
 
+  const existingTotal = useMemo(
+    () => (editingOrder?.items || []).reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0),
+    [editingOrder]
+  );
+
   // ── Submit ──
   const handleSubmit = () => {
-    if (cart.length === 0) { toast.error("Savatcha bo'sh"); return; }
+    if (addMode) {
+      if (cart.length === 0) { toast.error("Yangi mahsulot qo'shmadingiz"); return; }
+      addToExistingMutation.mutate();
+      return;
+    }
 
-    if (editingOrderId) { updateOrderMutation.mutate(); return; }
+    if (cart.length === 0) { toast.error("Savatcha bo'sh"); return; }
 
     if (orderType === OrderType.DineIn && !selectedTableId) {
       toast.error("Stol tanlang"); return;
@@ -326,9 +378,9 @@ const POSTerminal = () => {
 
     createMutation.mutate({
       userId,
-      tableId:   selectedTableId ?? null,
+      ...(orderType === OrderType.DineIn && selectedTableId ? { tableId: selectedTableId } : {}),
       orderType,
-      items:     cart.map(i => ({ productId: i.productId, count: i.count })),
+      items: cart.map(i => ({ productId: i.productId, count: i.count })),
     });
   };
 
@@ -336,18 +388,64 @@ const POSTerminal = () => {
   const handleSelectTable = (table) => {
     setSelectedTableId(table.id);
     setOrderType(OrderType.DineIn);
+
+    // Band stol → mavjud orderga qo'shish
+    if (table.tableStatus === TableStatus.Occupied || table.tableStatus === 2) {
+      const existing = visibleActiveOrders.find(o => o.tableNumber === table.tableNumber);
+      if (existing) {
+        setEditingOrderId(existing.id);
+        setAddMode(true);
+        setCart([]);
+        setStep('menu');
+        return;
+      }
+      // Order topilmadi (boshqa ofitsantniki yoki stale data)
+      if (waiter) {
+        toast.error("Bu stol sizga tegishli emas");
+        return;
+      }
+    }
+
+    // Bo'sh stol yoki band lekin order topilmadi (admin/kassa yangi order yaratadi)
+    setEditingOrderId(null);
+    setAddMode(false);
+    setCart([]);
     setStep('menu');
   };
 
   const handleTakeOut = () => {
     setSelectedTableId(null);
     setOrderType(OrderType.TakeOut);
+    setAddMode(false);
+    setEditingOrderId(null);
+    setCart([]);
     setStep('menu');
   };
 
   const handleBack = () => {
-    setStep('tables');
+    setAddMode(false);
+    setEditingOrderId(null);
+    setCart([]);
+    setSelectedTableId(null);
     setCartOpen(false);
+    setStep('tables');
+  };
+
+  // Active orders: band stol bo'lsa → addMode, aks holda normal
+  const handleActiveOrderClick = (order) => {
+    setEditingOrderId(order.id);
+    setAddMode(true);
+    setCart([]);
+    if (order.tableNumber > 0) {
+      const t = tables.find(t => t.tableNumber === order.tableNumber);
+      if (t) setSelectedTableId(t.id);
+      else setSelectedTableId(null);
+    } else {
+      setSelectedTableId(null);
+    }
+    setOrderType(order.orderType || OrderType.DineIn);
+    setStep('menu');
+    setActiveOrdersOpen(false);
   };
 
   // ── Filtered data ──
@@ -364,8 +462,8 @@ const POSTerminal = () => {
   );
 
   const selectedTable = tables.find(t => t.id === selectedTableId);
-  const isPending     = editingOrderId ? updateOrderMutation.isPending : createMutation.isPending;
   const cartCount     = cart.reduce((s, i) => s + i.count, 0);
+  const isPending     = addMode ? addToExistingMutation.isPending : createMutation.isPending;
 
   // ─── RENDER ───────────────────────────────────────────────────────────────
 
@@ -376,17 +474,13 @@ const POSTerminal = () => {
       <header className="flex-shrink-0 bg-white dark:bg-gray-900 border-b dark:border-gray-800 shadow-sm">
         <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3">
 
-          {/* Back button — faqat menyu stepida */}
           {step === 'menu' && (
-            <button
-              onClick={handleBack}
-              className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors -ml-1 shrink-0"
-            >
+            <button onClick={handleBack}
+              className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors -ml-1 shrink-0">
               <ArrowLeft size={20} className="text-gray-600 dark:text-gray-300" />
             </button>
           )}
 
-          {/* Title / Order type toggle */}
           <div className="flex-1 min-w-0 flex items-center gap-3 flex-wrap">
             {step === 'tables' ? (
               <div>
@@ -395,38 +489,39 @@ const POSTerminal = () => {
               </div>
             ) : (
               <>
-                <h1 className="text-base sm:text-lg font-black text-gray-900 dark:text-white leading-tight shrink-0">
-                  {orderType === OrderType.TakeOut
-                    ? 'Olib ketish'
-                    : selectedTable
-                    ? `Stol #${selectedTable.tableNumber}`
-                    : 'Menyu'}
-                </h1>
+                <div>
+                  <h1 className="text-base sm:text-lg font-black text-gray-900 dark:text-white leading-tight">
+                    {orderType === OrderType.TakeOut
+                      ? 'Olib ketish'
+                      : selectedTable
+                      ? `Stol #${selectedTable.tableNumber}`
+                      : 'Menyu'}
+                  </h1>
+                  {addMode && editingOrder && (
+                    <p className="text-xs text-orange-500 font-semibold">
+                      #{editingOrder.sku} · Qo'shish rejimi
+                    </p>
+                  )}
+                </div>
 
-                {/* Order type — faqat kassa va admin */}
-                {!waiter && (
+                {/* Order type toggle — faqat kassa/admin, yangi order uchun */}
+                {!waiter && !addMode && (
                   <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 text-xs shrink-0">
                     <button
                       onClick={() => setOrderType(OrderType.DineIn)}
                       className={`px-2.5 sm:px-3 py-1.5 font-semibold flex items-center gap-1 transition-colors ${
-                        orderType === OrderType.DineIn
-                          ? 'bg-orange-500 text-white'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        orderType === OrderType.DineIn ? 'bg-orange-500 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
-                      <UtensilsCrossed size={12} />
-                      <span className="hidden sm:inline">Ichida</span>
+                      <UtensilsCrossed size={12} /><span className="hidden sm:inline">Ichida</span>
                     </button>
                     <button
                       onClick={() => { setOrderType(OrderType.TakeOut); setSelectedTableId(null); }}
                       className={`px-2.5 sm:px-3 py-1.5 font-semibold flex items-center gap-1 transition-colors ${
-                        orderType === OrderType.TakeOut
-                          ? 'bg-orange-500 text-white'
-                          : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        orderType === OrderType.TakeOut ? 'bg-orange-500 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
-                      <ShoppingBag size={12} />
-                      <span className="hidden sm:inline">Olib ketish</span>
+                      <ShoppingBag size={12} /><span className="hidden sm:inline">Olib ketish</span>
                     </button>
                   </div>
                 )}
@@ -434,7 +529,7 @@ const POSTerminal = () => {
             )}
           </div>
 
-          {/* Active orders button */}
+          {/* Faol buyurtmalar tugmasi */}
           <button
             onClick={() => setActiveOrdersOpen(true)}
             className="relative p-2 sm:px-3 sm:py-2 flex items-center gap-2
@@ -463,8 +558,7 @@ const POSTerminal = () => {
               <button
                 key={value}
                 onClick={() => setTableTypeFilter(value)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold
-                             border transition-all shrink-0 ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all shrink-0 ${
                   tableTypeFilter === value
                     ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-transparent'
                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-400'
@@ -474,8 +568,6 @@ const POSTerminal = () => {
                 {label}
               </button>
             ))}
-
-            {/* Search */}
             <div className="relative ml-auto">
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
@@ -489,15 +581,11 @@ const POSTerminal = () => {
             </div>
           </div>
 
-          {/* Content */}
           <div className="p-4 sm:p-6 space-y-6">
-
-            {/* TakeOut — kassa/admin uchun */}
+            {/* Olib ketish — kassa/admin */}
             {!waiter && (
               <div>
-                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">
-                  Maxsus
-                </p>
+                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Maxsus</p>
                 <button
                   onClick={handleTakeOut}
                   className="flex items-center gap-3 px-5 py-4 rounded-2xl border-2 border-dashed
@@ -505,8 +593,7 @@ const POSTerminal = () => {
                              hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/10
                              transition-all group w-full sm:w-auto"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30
-                                  flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                  <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
                     <ShoppingBag size={20} className="text-orange-600" />
                   </div>
                   <div className="text-left">
@@ -517,7 +604,7 @@ const POSTerminal = () => {
               </div>
             )}
 
-            {/* Tables grid */}
+            {/* Stollar grid */}
             {tablesLoading ? (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
                 {[...Array(16)].map((_, i) => (
@@ -530,7 +617,6 @@ const POSTerminal = () => {
                 <p className="font-medium text-sm">Stol topilmadi</p>
               </div>
             ) : tableTypeFilter === 'all' ? (
-              // Guruhlab ko'rsatish
               [TableType.Simple, TableType.Terrace, TableType.VIP].map(type => {
                 const group = filteredTables.filter(t => t.tableType === type);
                 if (!group.length) return null;
@@ -562,9 +648,7 @@ const POSTerminal = () => {
             <button
               onClick={() => setSelectedCategory(null)}
               className={`px-4 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                !selectedCategory
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                !selectedCategory ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
               Barchasi
@@ -574,9 +658,7 @@ const POSTerminal = () => {
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-4 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                  selectedCategory === cat.id
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  selectedCategory === cat.id ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}
               >
                 {cat.name}
@@ -616,13 +698,10 @@ const POSTerminal = () => {
                         </span>
                       )}
                       <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-2">
-                        {product.imageUrl ? (
-                          <img src={getImgUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <UtensilsCrossed size={24} className="text-gray-300" />
-                          </div>
-                        )}
+                        {product.imageUrl
+                          ? <img src={getImgUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center"><UtensilsCrossed size={24} className="text-gray-300" /></div>
+                        }
                       </div>
                       <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 mb-1">{product.name}</p>
                       <p className="text-xs font-bold text-orange-600">{product.price?.toLocaleString()} so'm</p>
@@ -633,25 +712,42 @@ const POSTerminal = () => {
             )}
           </div>
 
-          {/* ── Floating cart button ── */}
-          {cart.length > 0 && (
+          {/* ── Floating savatcha tugmasi ── */}
+          {/* addMode: doim ko'rinadí (mavjud order bor); yangi order: faqat cart>0 da */}
+          {(addMode || cart.length > 0) && (
             <div className="absolute bottom-5 right-4 sm:right-6 z-20">
               <button
                 onClick={() => setCartOpen(true)}
-                className="flex items-center gap-3 pl-4 pr-5 py-3.5 bg-orange-500 hover:bg-orange-600
-                           text-white rounded-2xl shadow-xl shadow-orange-200 dark:shadow-orange-900/40
-                           transition-all hover:scale-105 active:scale-95"
+                className={`flex items-center gap-3 pl-4 pr-5 py-3.5 rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 ${
+                  cart.length > 0
+                    ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-200 dark:shadow-orange-900/40'
+                    : 'bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 shadow-gray-200 dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700'
+                }`}
               >
                 <div className="relative shrink-0">
                   <ShoppingCart size={20} />
-                  <span className="absolute -top-2.5 -right-2.5 min-w-[20px] h-5 px-1 bg-white text-orange-500
-                                   text-[10px] rounded-full flex items-center justify-center font-black">
-                    {cartCount}
-                  </span>
+                  {cart.length > 0 && (
+                    <span className={`absolute -top-2.5 -right-2.5 min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center font-black text-[10px] ${
+                      cart.length > 0 ? 'bg-white text-orange-500' : 'bg-orange-500 text-white'
+                    }`}>
+                      {cartCount}
+                    </span>
+                  )}
                 </div>
                 <div className="text-left">
-                  <p className="text-[10px] font-semibold opacity-80 leading-tight">Savatcha</p>
-                  <p className="text-sm font-black leading-tight">{totalAmount.toLocaleString()} so'm</p>
+                  {cart.length > 0 ? (
+                    <>
+                      <p className="text-[10px] font-semibold opacity-80 leading-tight">
+                        {addMode ? 'Yangi qo\'shilmoqda' : 'Savatcha'}
+                      </p>
+                      <p className="text-sm font-black leading-tight">+{totalAmount.toLocaleString()} so'm</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[10px] font-semibold opacity-70 leading-tight">Mavjud buyurtma</p>
+                      <p className="text-sm font-black leading-tight">Ko'rish</p>
+                    </>
+                  )}
                 </div>
               </button>
             </div>
@@ -661,60 +757,188 @@ const POSTerminal = () => {
 
       {/* ══ SAVATCHA DRAWER ═══════════════════════════════════════════════════ */}
       <Drawer open={cartOpen} onClose={() => setCartOpen(false)}>
-        {/* Header */}
+
+        {/* ── Header ── */}
         <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-800 flex-shrink-0">
           <div>
-            <h2 className="text-base font-black text-gray-900 dark:text-white">Savatcha</h2>
-            <p className="text-xs text-gray-400">{cartCount} ta mahsulot</p>
+            {addMode && editingOrder ? (
+              <>
+                <h2 className="text-base font-black text-gray-900 dark:text-white">
+                  {editingOrder.orderType === OrderType.TakeOut
+                    ? 'Olib ketish'
+                    : selectedTable
+                    ? `Stol #${selectedTable.tableNumber}`
+                    : 'Buyurtma'} · #{editingOrder.sku}
+                </h2>
+                <p className="text-xs text-orange-500 font-semibold">Mavjud buyurtmaga qo'shish</p>
+              </>
+            ) : addMode ? (
+              <>
+                <h2 className="text-base font-black text-gray-900 dark:text-white">Buyurtma yuklanmoqda</h2>
+                <p className="text-xs text-gray-400">Iltimos kuting...</p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-base font-black text-gray-900 dark:text-white">Savatcha</h2>
+                <p className="text-xs text-gray-400">{cartCount} ta mahsulot</p>
+              </>
+            )}
           </div>
-          <button
-            onClick={() => setCartOpen(false)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
-          >
+          <button onClick={() => setCartOpen(false)}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
             <X size={20} className="text-gray-500" />
           </button>
         </div>
 
-        {/* Items */}
+        {/* ── Items ── */}
         <div className="flex-1 overflow-y-auto px-5">
-          {cart.map(item => (
-            <CartRow
-              key={item.productId}
-              item={item}
-              onIncrease={increaseCart}
-              onDecrease={decreaseCart}
-              onRemove={removeFromCart}
-            />
-          ))}
+
+          {addMode ? (
+            editingLoading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="animate-spin text-orange-500" size={28} />
+              </div>
+            ) : editingOrder ? (
+              <>
+                {/* ── MAVJUD BUYURTMA (read-only) ── */}
+                <div className="pt-4 pb-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                      Mavjud buyurtma
+                    </span>
+                    {fmtTime(editingOrder.createdAt) && (
+                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                        <Clock size={9} /> {fmtTime(editingOrder.createdAt)}
+                      </span>
+                    )}
+                  </div>
+
+                  {(editingOrder.items || []).length === 0 ? (
+                    <p className="text-xs text-gray-400 italic py-2">Mahsulotlar yo'q</p>
+                  ) : (
+                    (editingOrder.items || []).map(item => (
+                      <ExistingItemRow key={item.id ?? item.productId} item={item} />
+                    ))
+                  )}
+
+                  {/* Mavjud jami */}
+                  <div className="flex items-center justify-between pt-2 mt-1">
+                    <span className="text-xs text-gray-400 dark:text-gray-500">Mavjud jami:</span>
+                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                      {existingTotal.toLocaleString()} so'm
+                    </span>
+                  </div>
+                </div>
+
+                {/* ── AJRATUVCHI CHIZIQ ── */}
+                <div className="my-3 border-t-2 border-dashed border-gray-200 dark:border-gray-700" />
+
+                {/* ── YANGI QO'SHILMOQDA ── */}
+                <div className="pb-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">
+                      Yangi qo'shilmoqda
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                      <Clock size={9} /> {nowTime()}
+                    </span>
+                  </div>
+
+                  {cart.length === 0 ? (
+                    <div className="text-center py-6 text-gray-400">
+                      <ShoppingCart size={28} className="mx-auto mb-2 opacity-30" />
+                      <p className="text-xs">Yangi mahsulot tanlang</p>
+                    </div>
+                  ) : (
+                    cart.map(item => (
+                      <CartRow
+                        key={item.productId}
+                        item={item}
+                        onIncrease={increaseCart}
+                        onDecrease={decreaseCart}
+                        onRemove={removeFromCart}
+                      />
+                    ))
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                <p className="text-sm">Buyurtma topilmadi</p>
+              </div>
+            )
+          ) : (
+            // Normal mode
+            cart.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                <ShoppingCart size={36} className="mb-3 opacity-30" />
+                <p className="text-sm">Savatcha bo'sh</p>
+              </div>
+            ) : (
+              cart.map(item => (
+                <CartRow
+                  key={item.productId}
+                  item={item}
+                  onIncrease={increaseCart}
+                  onDecrease={decreaseCart}
+                  onRemove={removeFromCart}
+                />
+              ))
+            )
+          )}
         </div>
 
-        {/* Footer */}
+        {/* ── Footer ── */}
         <div className="px-5 py-4 border-t dark:border-gray-800 bg-gray-50 dark:bg-gray-950 flex-shrink-0">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Jami:</span>
-            <span className="text-2xl font-black text-gray-900 dark:text-white">
-              {totalAmount.toLocaleString()} so'm
-            </span>
-          </div>
+
+          {/* Jami ko'rsatish */}
+          {addMode && editingOrder ? (
+            <div className="space-y-1 mb-4">
+              <div className="flex justify-between text-xs text-gray-400">
+                <span>Mavjud jami:</span>
+                <span className="font-semibold">{existingTotal.toLocaleString()} so'm</span>
+              </div>
+              {cart.length > 0 && (
+                <div className="flex justify-between text-xs text-orange-500 font-semibold">
+                  <span>Yangi:</span>
+                  <span>+{totalAmount.toLocaleString()} so'm</span>
+                </div>
+              )}
+              <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
+                <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Jami:</span>
+                <span className="text-xl font-black text-gray-900 dark:text-white">
+                  {(existingTotal + totalAmount).toLocaleString()} so'm
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Jami:</span>
+              <span className="text-2xl font-black text-gray-900 dark:text-white">
+                {totalAmount.toLocaleString()} so'm
+              </span>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <button
-              onClick={() => { clearAll(); }}
+              onClick={clearAll}
               className="flex-1 py-3 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700
                          text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm transition-colors"
             >
-              Tozalash
+              Bekor
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isPending}
+              disabled={isPending || (addMode && cart.length === 0)}
               className="flex-[2] py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold
-                         text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2
+                         text-sm transition-colors disabled:opacity-40 flex items-center justify-center gap-2
                          shadow-lg shadow-orange-200 dark:shadow-orange-900/30"
             >
               {isPending
                 ? <><Loader2 size={16} className="animate-spin" /> Yuborilmoqda...</>
-                : editingOrderId
-                ? <><ShoppingCart size={16} /> Yangilash</>
+                : addMode
+                ? <><Plus size={16} /> Qo'shish</>
                 : <><ShoppingCart size={16} /> Buyurtma berish</>
               }
             </button>
@@ -729,10 +953,8 @@ const POSTerminal = () => {
             <h2 className="text-base font-black text-gray-900 dark:text-white">Faol buyurtmalar</h2>
             <p className="text-xs text-gray-400">{visibleActiveOrders.length} ta</p>
           </div>
-          <button
-            onClick={() => setActiveOrdersOpen(false)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
-          >
+          <button onClick={() => setActiveOrdersOpen(false)}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
             <X size={20} className="text-gray-500" />
           </button>
         </div>
@@ -747,27 +969,13 @@ const POSTerminal = () => {
               <ActiveOrderRow
                 key={order.id}
                 order={order}
-                onClick={() => {
-                  setEditingOrderId(order.id);
-                  setActiveOrdersOpen(false);
-                }}
+                onClick={() => handleActiveOrderClick(order)}
               />
             ))
           )}
         </div>
       </Drawer>
 
-      {/* ══ ORDER DETAIL MODAL ════════════════════════════════════════════════ */}
-      {editingOrderId && !updateOrderMutation.isPending && (
-        <OrderDetailModal
-          orderId={editingOrderId}
-          onClose={() => {
-            setEditingOrderId(null);
-            queryClient.invalidateQueries(['orders']);
-            queryClient.invalidateQueries(['orders', 'my-active']);
-          }}
-        />
-      )}
     </div>
   );
 };

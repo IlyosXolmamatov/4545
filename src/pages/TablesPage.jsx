@@ -13,6 +13,7 @@ import {
 } from '../api/tables';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
+import ConfirmModal from '../components/ConfirmModal';
 
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
@@ -165,6 +166,7 @@ const TablesPage = () => {
   const { hasPermission } = useAuthStore();
 
   const { isDark } = useThemeStore();
+  const [dlg, setDlg] = useState(null);
   const [typeFilter, setTypeFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing]     = useState(false);
@@ -262,9 +264,11 @@ const TablesPage = () => {
   };
 
   const handleDelete = (table) => {
-    if (confirm(`${table.tableNumber}-stol o'chirilsinmi?`)) {
-      deleteMutation.mutate(table.id);
-    }
+    setDlg({
+      message: `${table.tableNumber}-stol o'chirilsinmi?`,
+      confirmText: "Ha, o'chirish",
+      onConfirm: () => deleteMutation.mutate(table.id),
+    });
   };
 
   const closeModal = () => setIsModalOpen(false);
@@ -666,6 +670,14 @@ const TablesPage = () => {
           </div>
         </div>
       )}
+      <ConfirmModal
+        open={!!dlg}
+        message={dlg?.message}
+        confirmText={dlg?.confirmText}
+        danger={dlg?.danger ?? true}
+        onConfirm={() => { dlg?.onConfirm?.(); setDlg(null); }}
+        onCancel={() => setDlg(null)}
+      />
     </div>
   );
 };

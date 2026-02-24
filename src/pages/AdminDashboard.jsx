@@ -1,19 +1,22 @@
 import { useAuthStore } from '../store/authStore';
 import { Users, UtensilsCrossed, Table2, Grid3x3, ShoppingCart, DollarSign } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { userAPI } from '../api/users';
 import { productAPI } from '../api/products';
 import { tableAPI } from '../api/tables';
 import { categoryAPI } from '../api/categories';
 import { orderAPI } from '../api/orders';
 import AnalyticsPanel from '../components/AnalyticsPanel';
+import ProductAnalyticsPanel from '../components/ProductAnalyticsPanel';
 
 export default function AdminDashboard() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const isWaiter = user?.role === 2;
 
   // Waiter's orders
-  const { data: myOrders = [], isLoading: myOrdersLoading } = useQuery({
+  const { data: myOrders = [] } = useQuery({
     queryKey: ['orders', 'my-active'],
     queryFn: orderAPI.getMyActive,
     enabled: isWaiter,
@@ -132,19 +135,19 @@ export default function AdminDashboard() {
       <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Tezkor harakatlar</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all">
+          <button onClick={() => navigate('/users')} className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all text-left">
             <Users className="w-6 h-6 text-gray-600 dark:text-gray-400 mb-2" />
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Xodim qo'shish</p>
           </button>
-          <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all">
+          <button onClick={() => navigate('/products')} className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all text-left">
             <UtensilsCrossed className="w-6 h-6 text-gray-600 dark:text-gray-400 mb-2" />
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Mahsulot qo'shish</p>
           </button>
-          <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all">
+          <button onClick={() => navigate('/tables')} className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all text-left">
             <Table2 className="w-6 h-6 text-gray-600 dark:text-gray-400 mb-2" />
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Stol qo'shish</p>
           </button>
-          <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all">
+          <button onClick={() => navigate('/categories')} className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all text-left">
             <Grid3x3 className="w-6 h-6 text-gray-600 dark:text-gray-400 mb-2" />
             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Kategoriya qo'shish</p>
           </button>
@@ -153,6 +156,9 @@ export default function AdminDashboard() {
 
       {/* Analytics Panel */}
       <AnalyticsPanel />
+
+      {/* Product Analytics Panel */}
+      <ProductAnalyticsPanel />
 
       {/* Permissions Display */}
       {user?.permissions?.length > 0 && (

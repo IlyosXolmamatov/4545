@@ -15,6 +15,16 @@ import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import ConfirmModal from '../components/ConfirmModal';
 
+// ─── NORMALIZE (backend strings → numbers) ───────────────────────────────────
+const STATUS_STR = { Empty: 1, NotEmpty: 2, Reserved: 3 };
+const TYPE_STR   = { Simple: 1, Terrace: 2, VIP: 3 };
+
+const normalizeTable = (t) => ({
+  ...t,
+  tableStatus: typeof t.tableStatus === 'string' ? (STATUS_STR[t.tableStatus] ?? t.tableStatus) : t.tableStatus,
+  tableType:   typeof t.tableType   === 'string' ? (TYPE_STR[t.tableType]     ?? t.tableType)   : t.tableType,
+});
+
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 
 const TYPE_CONFIG = [
@@ -189,6 +199,7 @@ const TablesPage = () => {
   const { data: tables = [], isLoading, isFetching } = useQuery({
     queryKey: ['tables'],
     queryFn: tableAPI.getAll,
+    select: (data) => (Array.isArray(data) ? data.map(normalizeTable) : []),
     refetchInterval: 10_000,
     refetchIntervalInBackground: true,
   });
@@ -197,16 +208,8 @@ const TablesPage = () => {
   const createMutation = useMutation({
     mutationFn: ({ tableNumber, tableStatus, tableType, capacity, waiterName }) =>
       tableAPI.create({ tableNumber, tableStatus, tableType, capacity, waiterName }),
-    onSuccess: async (data, variables) => {
-      // If backend returns the created table, use it; otherwise refetch
-      let created = null;
-      if (data && data.id) created = data;
-      else {
-        const updated = await queryClient.fetchQuery({ queryKey: ['tables'], queryFn: tableAPI.getAll });
-        created = updated.find((t) => t.tableNumber === variables.tableNumber) ?? null;
-      }
-      // Backend now stores capacity; nothing to persist locally
-      queryClient.invalidateQueries(['tables']);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables'] });
       toast.success("Stol qo'shildi");
       closeModal();
     },
@@ -216,9 +219,8 @@ const TablesPage = () => {
   const updateMutation = useMutation({
     mutationFn: ({ id, tableNumber, tableStatus, tableType, capacity, waiterName }) =>
       tableAPI.update({ id, tableNumber, tableStatus, tableType, capacity, waiterName }),
-    onSuccess: (data, variables) => {
-      // Backend stores capacity; just refresh
-      queryClient.invalidateQueries(['tables']);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables'] });
       toast.success('Stol yangilandi');
       closeModal();
     },
@@ -231,9 +233,8 @@ const TablesPage = () => {
 
   const deleteMutation = useMutation({
     mutationFn: tableAPI.delete,
-    onSuccess: (_, variables) => {
-      // Backend removed the table and capacity is server-side; just refresh
-      queryClient.invalidateQueries(['tables']);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tables'] });
       toast.success("Stol o'chirildi");
     },
     onError: (err) => {

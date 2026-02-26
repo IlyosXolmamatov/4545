@@ -12,6 +12,18 @@ import { useAuthStore } from '../store/authStore';
 import ToggleActiveButton from '../components/ToggleActiveButton';
 import ConfirmModal from '../components/ConfirmModal';
 
+// ─── CATEGORY COLOR PALETTE ───────────────────────────────────────────────────
+const CAT_PALETTE = [
+  { active: 'bg-violet-500 shadow-violet-200 dark:shadow-violet-900/40', idle: 'border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20', dot: 'bg-violet-400', count: 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300' },
+  { active: 'bg-blue-500 shadow-blue-200 dark:shadow-blue-900/40',       idle: 'border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20',       dot: 'bg-blue-400',   count: 'bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300'   },
+  { active: 'bg-emerald-500 shadow-emerald-200 dark:shadow-emerald-900/40', idle: 'border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20', dot: 'bg-emerald-400', count: 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300' },
+  { active: 'bg-amber-500 shadow-amber-200 dark:shadow-amber-900/40',    idle: 'border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20',    dot: 'bg-amber-400',  count: 'bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300'  },
+  { active: 'bg-rose-500 shadow-rose-200 dark:shadow-rose-900/40',       idle: 'border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20',       dot: 'bg-rose-400',   count: 'bg-rose-100 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300'   },
+  { active: 'bg-cyan-500 shadow-cyan-200 dark:shadow-cyan-900/40',       idle: 'border-cyan-200 dark:border-cyan-800 text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-900/20',       dot: 'bg-cyan-400',   count: 'bg-cyan-100 dark:bg-cyan-900/60 text-cyan-700 dark:text-cyan-300'   },
+  { active: 'bg-fuchsia-500 shadow-fuchsia-200 dark:shadow-fuchsia-900/40', idle: 'border-fuchsia-200 dark:border-fuchsia-800 text-fuchsia-700 dark:text-fuchsia-400 bg-fuchsia-50 dark:bg-fuchsia-900/20', dot: 'bg-fuchsia-400', count: 'bg-fuchsia-100 dark:bg-fuchsia-900/60 text-fuchsia-700 dark:text-fuchsia-300' },
+  { active: 'bg-indigo-500 shadow-indigo-200 dark:shadow-indigo-900/40', idle: 'border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20', dot: 'bg-indigo-400', count: 'bg-indigo-100 dark:bg-indigo-900/60 text-indigo-700 dark:text-indigo-300' },
+];
+
 // ─── CATEGORY MODAL ───────────────────────────────────────────────────────────
 const CategoryModal = ({ editing, onClose, onSuccess }) => {
   const queryClient = useQueryClient();
@@ -22,7 +34,7 @@ const CategoryModal = ({ editing, onClose, onSuccess }) => {
       ? (data) => categoryAPI.update({ ...data, id: editing.id })
       : categoryAPI.create,
     onSuccess: () => {
-      queryClient.invalidateQueries(['categories']);
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
       toast.success(editing ? 'Kategoriya yangilandi' : "Kategoriya qo'shildi");
       onSuccess?.();
     },
@@ -36,19 +48,19 @@ const CategoryModal = ({ editing, onClose, onSuccess }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-sm shadow-2xl">
         <div className="flex items-center justify-between p-5 border-b dark:border-gray-700">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">
             {editing ? 'Kategoriyani tahrirlash' : 'Yangi kategoriya'}
           </h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg">
+          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
             <X size={18} className="text-gray-500" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
               Kategoriya nomi *
             </label>
             <input
@@ -65,7 +77,7 @@ const CategoryModal = ({ editing, onClose, onSuccess }) => {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors"
+              className="flex-1 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors"
             >
               Bekor qilish
             </button>
@@ -129,7 +141,7 @@ const ProductModal = ({ editing, categories, onClose, onSuccess }) => {
   const saveMutation = useMutation({
     mutationFn: editing ? productAPI.update : productAPI.create,
     onSuccess: () => {
-      queryClient.invalidateQueries(['products']);
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success(editing ? 'Mahsulot yangilandi' : "Mahsulot qo'shildi");
       onSuccess?.();
     },
@@ -162,18 +174,18 @@ const ProductModal = ({ editing, categories, onClose, onSuccess }) => {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">
             {editing ? 'Mahsulotni tahrirlash' : 'Yangi mahsulot'}
           </h2>
-          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg">
+          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
             <X size={20} className="text-gray-500" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Image */}
           <div className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700">Rasm *</label>
+            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Rasm *</label>
             <div
               onClick={() => fileInputRef.current?.click()}
               className={`aspect-square border-2 border-dashed rounded-xl flex items-center justify-center cursor-pointer overflow-hidden transition-colors ${
-                imagePreview ? 'border-orange-400' : 'border-gray-300 hover:border-orange-400 hover:bg-gray-50'
+                imagePreview ? 'border-orange-400' : 'border-gray-300 hover:border-orange-400 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
             >
               {imagePreview ? (
@@ -245,20 +257,20 @@ const ProductModal = ({ editing, categories, onClose, onSuccess }) => {
                 className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl h-20 resize-none focus:ring-2 focus:ring-orange-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
             </div>
-            <label className="flex items-center gap-2 cursor-pointer p-2 bg-gray-50 rounded-xl border border-gray-100">
+            <label className="flex items-center gap-2 cursor-pointer p-2 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
               <input
                 type="checkbox" name="isActive" checked={form.isActive} onChange={handleInput}
                 className="w-4 h-4 accent-orange-500"
               />
-              <span className="text-sm font-medium text-gray-700">Sotuvda mavjud</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Sotuvda mavjud</span>
             </label>
           </div>
 
           {/* Footer */}
-          <div className="md:col-span-2 flex justify-end gap-3 pt-3 border-t">
+          <div className="md:col-span-2 flex justify-end gap-3 pt-3 border-t dark:border-gray-700">
             <button
               type="button" onClick={onClose}
-              className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors"
+              className="px-5 py-2.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors"
             >
               Bekor qilish
             </button>
@@ -303,7 +315,7 @@ const MenuPage = () => {
   const deleteProdMutation = useMutation({
     mutationFn: productAPI.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries(['products']);
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success("Mahsulot o'chirildi");
     },
     onError: () => toast.error("O'chirishda xatolik"),
@@ -313,7 +325,7 @@ const MenuPage = () => {
   const deleteCatMutation = useMutation({
     mutationFn: categoryAPI.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries(['categories']);
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
       if (selectedCategory) setSelectedCategory(null);
       toast.success("Kategoriya o'chirildi");
     },
@@ -336,7 +348,7 @@ const MenuPage = () => {
       return productAPI.update(fd);
     },
     onMutate: async ({ productId, isActive }) => {
-      await queryClient.cancelQueries(['products']);
+      await queryClient.cancelQueries({ queryKey: ['products'] });
       const prev = queryClient.getQueryData(['products']);
       queryClient.setQueryData(['products'], (old = []) =>
         old.map((p) => (p.id === productId ? { ...p, isActive } : p))
@@ -347,7 +359,7 @@ const MenuPage = () => {
       queryClient.setQueryData(['products'], ctx.prev);
       toast.error('Holatni yangilashda xatolik');
     },
-    onSettled: () => queryClient.invalidateQueries(['products']),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['products'] }),
   });
 
   // ── Filtered products ──
@@ -377,7 +389,7 @@ const MenuPage = () => {
           {hasPermission('Category_Create') && (
             <button
               onClick={() => setCatModal('create')}
-              className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl font-semibold text-sm transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm transition-colors shadow-sm"
             >
               <Plus size={17} /> Kategoriya
             </button>
@@ -393,69 +405,85 @@ const MenuPage = () => {
         </div>
       </div>
 
-      {/* ── CATEGORY TABS ── */}
-      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+      {/* ── CATEGORY PILLS ── */}
+      <div className="flex gap-2 overflow-x-auto pb-3 mb-5 scrollbar-hide">
+
+        {/* Hammasi */}
         <button
           onClick={() => setSelectedCategory(null)}
-          className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-colors whitespace-nowrap ${
+          className={`flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
             !selectedCategory
-              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-              : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400'
+              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-transparent shadow-md shadow-gray-300 dark:shadow-gray-900/40'
+              : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'
           }`}
         >
+          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${!selectedCategory ? 'bg-white/50 dark:bg-gray-900/50' : 'bg-gray-300 dark:bg-gray-600'}`} />
           Hammasi
-          <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${!selectedCategory ? 'bg-white/20' : 'bg-gray-100'}`}>
+          <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${!selectedCategory ? 'bg-white/20 dark:bg-black/20' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'}`}>
             {products.length}
           </span>
         </button>
 
-        {categories.map((cat) => {
+        {/* Har bir kategoriya */}
+        {categories.map((cat, idx) => {
+          const pal = CAT_PALETTE[idx % CAT_PALETTE.length];
           const count = countFor(cat.id);
           const isActive = selectedCategory === cat.id;
+          const canEdit = hasPermission('Category_Update');
+          const canDel  = hasPermission('Category_Delete');
+
           return (
-            <div key={cat.id} className="flex-shrink-0 flex items-center group">
+            <div key={cat.id} className="flex-shrink-0 relative group/pill">
               <button
                 onClick={() => setSelectedCategory(isActive ? null : cat.id)}
-                className={`px-4 py-2 rounded-l-xl text-sm font-semibold transition-colors whitespace-nowrap ${
+                className={`flex items-center gap-2 text-sm font-semibold transition-all border rounded-full whitespace-nowrap ${
+                  canEdit || canDel ? 'pl-3.5 pr-10' : 'px-3.5'
+                } py-2 ${
                   isActive
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-white border border-r-0 border-gray-200 text-gray-600 hover:border-gray-400'
+                    ? `${pal.active} text-white border-transparent shadow-md`
+                    : `${pal.idle} border hover:shadow-sm`
                 }`}
               >
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? 'bg-white/60' : pal.dot}`} />
                 {cat.name}
-                <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-xs ${isActive ? 'bg-white/20' : 'bg-gray-100'}`}>
+                <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${isActive ? 'bg-white/25' : pal.count}`}>
                   {count}
                 </span>
               </button>
-              {hasPermission('Category_Update') && (
-                <button
-                  onClick={() => setCatModal(cat)}
-                  className={`px-2 py-2 text-xs border-y transition-colors ${
-                    isActive
-                      ? 'bg-gray-800 text-white border-gray-900 hover:bg-gray-700'
-                      : 'bg-white border-gray-200 text-gray-400 hover:text-blue-600'
-                  }`}
-                  title="Tahrirlash"
-                >
-                  ✎
-                </button>
-              )}
-              {hasPermission('Category_Delete') && (
-                <button
-                  onClick={() => setDlg({
-                    message: `"${cat.name}" kategoriyasi o'chirilsinmi?`,
-                    confirmText: "Ha, o'chirish",
-                    onConfirm: () => deleteCatMutation.mutate(cat.id),
-                  })}
-                  className={`px-2 py-2 rounded-r-xl text-xs border transition-colors ${
-                    isActive
-                      ? 'bg-gray-800 text-white border-gray-900 hover:bg-red-600 hover:border-red-600'
-                      : 'bg-white border-gray-200 text-gray-400 hover:text-red-500'
-                  }`}
-                  title="O'chirish"
-                >
-                  ✕
-                </button>
+
+              {/* Edit / Delete — hover da ko'rinadi */}
+              {(canEdit || canDel) && (
+                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover/pill:opacity-100 transition-opacity">
+                  {canEdit && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCatModal(cat); }}
+                      title="Tahrirlash"
+                      className={`w-6 h-6 flex items-center justify-center rounded-full transition-colors ${
+                        isActive ? 'hover:bg-white/25 text-white' : 'hover:bg-black/10 dark:hover:bg-white/10 text-current'
+                      }`}
+                    >
+                      <Edit2 size={11} />
+                    </button>
+                  )}
+                  {canDel && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDlg({
+                          message: `"${cat.name}" kategoriyasi o'chirilsinmi?`,
+                          confirmText: "Ha, o'chirish",
+                          onConfirm: () => deleteCatMutation.mutate(cat.id),
+                        });
+                      }}
+                      title="O'chirish"
+                      className={`w-6 h-6 flex items-center justify-center rounded-full transition-colors ${
+                        isActive ? 'hover:bg-white/25 text-white' : 'hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 text-current'
+                      }`}
+                    >
+                      <X size={11} />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           );
@@ -528,7 +556,7 @@ const MenuPage = () => {
                 <div className="p-3">
                   <p className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-1 mb-1">{product.name}</p>
                   {catName && (
-                    <span className="inline-block bg-orange-50 text-orange-600 text-xs font-medium px-2 py-0.5 rounded-full mb-2">
+                    <span className="inline-block bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-xs font-medium px-2 py-0.5 rounded-full mb-2">
                       {catName}
                     </span>
                   )}
@@ -575,6 +603,7 @@ const MenuPage = () => {
           onSuccess={() => setProdModal(null)}
         />
       )}
+
       <ConfirmModal
         open={!!dlg}
         message={dlg?.message}

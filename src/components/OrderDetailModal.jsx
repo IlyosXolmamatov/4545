@@ -50,10 +50,10 @@ const OrderDetailModal = ({ orderId, onClose }) => {
   });
 
   const invalidate = () => {
-    queryClient.invalidateQueries(['order', orderId]);
-    queryClient.invalidateQueries(['orders']);
-    queryClient.invalidateQueries(['orders', 'my-active']);
-    queryClient.invalidateQueries(['tables']);
+    queryClient.invalidateQueries({ queryKey: ['order', orderId] });
+    queryClient.invalidateQueries({ queryKey: ['orders'] });
+    queryClient.invalidateQueries({ queryKey: ['orders', 'my-active'] });
+    queryClient.invalidateQueries({ queryKey: ['tables'] });
   };
 
   // qaysi productId pending ekanligini alohida kuzatish
@@ -66,7 +66,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
       return orderAPI.increaseItem(orderId, productId, count);
     },
     onMutate: async ({ productId, count }) => {
-      await queryClient.cancelQueries(['order', orderId]);
+      await queryClient.cancelQueries({ queryKey: ['order', orderId] });
       const previous = queryClient.getQueryData(['order', orderId]);
       queryClient.setQueryData(['order', orderId], (old) => {
         if (!old) return old;
@@ -94,7 +94,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
       return orderAPI.decreaseItem(orderId, productId, count, 'Kamaytirish');
     },
     onMutate: async ({ productId, count }) => {
-      await queryClient.cancelQueries(['order', orderId]);
+      await queryClient.cancelQueries({ queryKey: ['order', orderId] });
       const previous = queryClient.getQueryData(['order', orderId]);
       queryClient.setQueryData(['order', orderId], (old) => {
         if (!old) return old;

@@ -15,6 +15,29 @@ OrderStatus.Accepted = 1;
 OrderStatus.Cancelled = 2;
 OrderStatus.Finished = 3;
 
+// ─── NORMALIZER (backend string enums → numbers) ──────────────────────────────
+// Backend returns orderStatus:"Accepted", orderType:"DineIn" as strings.
+// Frontend compares with numbers everywhere, so we normalize at API layer.
+
+const ORDER_STATUS_STR = { Accepted: 1, Cancelled: 2, Canselled: 2, Finished: 3 };
+const ORDER_TYPE_STR = { DineIn: 1, TakeOut: 2 };
+
+const normalizeOrder = (o) => {
+  if (!o || typeof o !== 'object') return o;
+  let orderStatus = typeof o.orderStatus === 'string'
+    ? (ORDER_STATUS_STR[o.orderStatus] ?? o.orderStatus)
+    : o.orderStatus;
+  // 0 (LegacyCancelled) → 2 (Cancelled) ga normallashtirish
+  if (orderStatus === 0) orderStatus = 2;
+  return {
+    ...o,
+    orderStatus,
+    orderType: typeof o.orderType === 'string'
+      ? (ORDER_TYPE_STR[o.orderType] ?? o.orderType)
+      : o.orderType,
+  };
+};
+
 export const ORDER_STATUS_COLORS = {
   1: 'bg-blue-100 text-blue-700',    // Accepted
   2: 'bg-red-100 text-red-700',      // Cancelled
@@ -46,7 +69,9 @@ export const orderAPI = {
    */
   getAll: async () => {
     const res = await api.get('/Order/GetAll');
-    return res.data;
+    console.log(res.data);
+
+    return Array.isArray(res.data) ? res.data.map(normalizeOrder) : res.data;
   },
 
   /**
@@ -56,7 +81,7 @@ export const orderAPI = {
    */
   getById: async (orderId) => {
     const res = await api.get(`/Order/GetById/${orderId}`);
-    return res.data;
+    return normalizeOrder(res.data);
   },
 
   /**
@@ -65,7 +90,7 @@ export const orderAPI = {
    */
   getMyActive: async () => {
     const res = await api.get('/Order/GetMyActiveOrders/my-active');
-    return res.data;
+    return Array.isArray(res.data) ? res.data.map(normalizeOrder) : res.data;
   },
 
   /**

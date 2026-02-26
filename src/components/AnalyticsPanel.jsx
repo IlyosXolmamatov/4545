@@ -15,22 +15,27 @@ export default function AnalyticsPanel() {
   // Disable queries when period=5 and dates not yet applied
   const customReady = filter.period !== 5 || (!!filter.startDate && !!filter.endDate);
 
-  const { data: ordersData, isLoading: ordersLoading, error: ordersError } = useQuery({
+  const toArr = (d) => (Array.isArray(d) ? d : []);
+
+  const { data: ordersData = [], isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ['analytics', 'orders', filter],
     queryFn: () => analyticsAPI.getOrders(filter),
     enabled: customReady,
+    select: toArr,
   });
 
-  const { data: productsData, isLoading: productsLoading, error: productsError } = useQuery({
+  const { data: productsData = [], isLoading: productsLoading, error: productsError } = useQuery({
     queryKey: ['analytics', 'products', filter],
     queryFn: () => analyticsAPI.getTopProducts({ ...filter, topCount: 5 }),
     enabled: customReady,
+    select: toArr,
   });
 
-  const { data: tablesData, isLoading: tablesLoading, error: tablesError } = useQuery({
+  const { data: tablesData = [], isLoading: tablesLoading, error: tablesError } = useQuery({
     queryKey: ['analytics', 'tables', filter],
     queryFn: () => analyticsAPI.getTables(filter),
     enabled: customReady,
+    select: toArr,
   });
 
   return (
@@ -51,9 +56,9 @@ export default function AnalyticsPanel() {
         ) : ordersError ? (
           <div className="text-sm text-red-500">Analytics/orders yuklanmadi</div>
         ) : (
-          <div style={{ width: '100%', height: 220 }}>
-            <ResponsiveContainer>
-              <LineChart data={ordersData || []}>
+          <div style={{ width: '100%', height: 220, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={ordersData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
@@ -76,9 +81,9 @@ export default function AnalyticsPanel() {
         ) : productsError ? (
           <div className="text-sm text-red-500">Analytics/products yuklanmadi</div>
         ) : (
-          <div style={{ width: '100%', height: 240 }}>
-            <ResponsiveContainer>
-              <BarChart data={productsData || []} layout="vertical">
+          <div style={{ width: '100%', height: 240, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={productsData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" tick={{ fontSize: 11 }} />
                 <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
@@ -100,11 +105,11 @@ export default function AnalyticsPanel() {
         ) : tablesError ? (
           <div className="text-sm text-red-500">Analytics/tables yuklanmadi</div>
         ) : (
-          <div style={{ width: '100%', height: 220 }} className="flex items-center">
-            <ResponsiveContainer>
+          <div style={{ width: '100%', height: 220, minWidth: 0 }}>
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={tablesData || []} dataKey="value" nameKey="label" cx="50%" cy="50%" outerRadius={70} label>
-                  {(tablesData || []).map((_, index) => (
+                <Pie data={tablesData} dataKey="value" nameKey="label" cx="50%" cy="50%" outerRadius={70} label>
+                  {tablesData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>

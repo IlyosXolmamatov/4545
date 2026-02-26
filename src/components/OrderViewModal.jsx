@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, Printer, Loader2, Trash2 } from 'lucide-react';
+import { X, Printer, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 import { orderAPI, OrderStatus, ORDER_STATUS_COLORS, ORDER_TYPE_LABELS, ORDER_STATUS_LABELS } from '../api/orders';
@@ -32,7 +32,8 @@ const formatPrice = (n) => `${(n || 0).toLocaleString('ru-RU')} so'm`;
 export default function OrderViewModal({ order, onClose }) {
   const isOpen = !!order;
   const queryClient = useQueryClient();
-  const { hasPermission } = useAuthStore();
+  const { hasPermission, isWaiter } = useAuthStore();
+  const waiter = isWaiter();
   const [dlg, setDlg] = useState(null);
 
   // GetById orqali to'liq detail — waiterName, tableNumber, createdAt olish uchun
@@ -45,9 +46,9 @@ export default function OrderViewModal({ order, onClose }) {
   const changeStatusMutation = useMutation({
     mutationFn: (status) => orderAPI.changeStatus(order.id, status),
     onSuccess: (_, status) => {
-      queryClient.invalidateQueries(['order', order?.id]);
-      queryClient.invalidateQueries(['orders']);
-      queryClient.invalidateQueries(['orders', 'my-active']);
+      queryClient.invalidateQueries({ queryKey: ['order', order?.id] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', 'my-active'] });
       toast.success(status === OrderStatus.Finished ? "To'lov qabul qilindi!" : 'Status yangilandi');
       if (status === OrderStatus.Finished || status === OrderStatus.Cancelled) {
         onClose();
@@ -56,17 +57,6 @@ export default function OrderViewModal({ order, onClose }) {
     onError: () => toast.error('Statusni yangilashda xatolik'),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: () => orderAPI.delete(order.id),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['orders']);
-      queryClient.invalidateQueries(['orders', 'my-active']);
-      queryClient.invalidateQueries(['tables']);
-      toast.success("Buyurtma o'chirildi");
-      onClose();
-    },
-    onError: () => toast.error("O'chirishda xatolik"),
-  });
 
   if (!isOpen) return null;
 
@@ -196,31 +186,6 @@ export default function OrderViewModal({ order, onClose }) {
                 </div>
               )}
 
-              {/* DELETE */}
-              {hasPermission('Order_Delete') && (
-                <button
-                  onClick={() => setDlg({
-                    title: `Buyurtma #${current.sku}`,
-                    message: "Buyurtma bazadan butunlay o'chiriladi. Bu amalni qaytarib bo'lmaydi.",
-                    confirmText: "Ha, o'chirish",
-                    danger: true,
-                    onConfirm: () => deleteMutation.mutate(),
-                  })}
-                  disabled={deleteMutation.isPending}
-                  className="w-full py-2.5 flex items-center justify-center gap-2 rounded-xl
-                             border border-red-200 dark:border-red-800
-                             bg-red-50 dark:bg-red-900/20
-                             hover:bg-red-100 dark:hover:bg-red-900/40
-                             text-red-600 dark:text-red-400
-                             text-sm font-semibold transition-colors disabled:opacity-50"
-                >
-                  {deleteMutation.isPending
-                    ? <Loader2 size={14} className="animate-spin" />
-                    : <Trash2 size={14} />}
-                  Buyurtmani o'chirish
-                </button>
-              )}
-
               {/* ACTION BUTTONS */}
               <div className="flex gap-3">
                 <button
@@ -230,7 +195,7 @@ export default function OrderViewModal({ order, onClose }) {
                 >
                   Yopish
                 </button>
-                <button
+                {!waiter && <button
                 onClick={() => {
                   try {
                     const statusLabel = ORDER_STATUS_LABELS[current.orderStatus] ?? '';
@@ -282,7 +247,7 @@ export default function OrderViewModal({ order, onClose }) {
               >
                 <Printer size={16} />
                 Chop etish
-              </button>
+              </button>}
             </div>
             </div>
 

@@ -74,6 +74,7 @@ export const tableAPI = {
    */
   getAll: async () => {
     const response = await axiosClient.get('/Table/GetAllTables');
+    console.log(response.data);
     return response.data;
   },
 
@@ -83,6 +84,7 @@ export const tableAPI = {
    */
   getById: async (id) => {
     const response = await axiosClient.get(`/Table/GetTable/${id}`);
+
 
     return response.data;
   },

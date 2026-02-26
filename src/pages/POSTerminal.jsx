@@ -35,6 +35,15 @@ const fmtTime = (d) => {
 
 const nowTime = () => new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
+// ─── NORMALIZE (backend strings → numbers) ───────────────────────────────────
+const STATUS_STR = { Empty: 1, NotEmpty: 2, Reserved: 3 };
+const TYPE_STR   = { Simple: 1, Terrace: 2, VIP: 3 };
+const normalizeTable = (t) => ({
+  ...t,
+  tableStatus: typeof t.tableStatus === 'string' ? (STATUS_STR[t.tableStatus] ?? t.tableStatus) : t.tableStatus,
+  tableType:   typeof t.tableType   === 'string' ? (TYPE_STR[t.tableType]     ?? t.tableType)   : t.tableType,
+});
+
 // ─── TABLE FILTER CONFIG ──────────────────────────────────────────────────────
 
 const TABLE_TYPE_FILTERS = [
@@ -216,7 +225,7 @@ const POSTerminal = () => {
   // ── Queries ──
   const { data: products = [],  isLoading: pLoading }     = useQuery({ queryKey: ['products'],   queryFn: productAPI.getAll });
   const { data: categories = [] }                          = useQuery({ queryKey: ['categories'], queryFn: categoryAPI.getAll });
-  const { data: tables = [],    isLoading: tablesLoading } = useQuery({ queryKey: ['tables'],     queryFn: tableAPI.getAll, refetchInterval: 15_000 });
+  const { data: tables = [],    isLoading: tablesLoading } = useQuery({ queryKey: ['tables'], queryFn: tableAPI.getAll, select: (d) => Array.isArray(d) ? d.map(normalizeTable) : [], refetchInterval: 15_000 });
 
   const { data: activeOrders = [] } = useQuery({
     queryKey: waiter ? ['orders', 'my-active'] : ['orders'],
@@ -246,27 +255,26 @@ const POSTerminal = () => {
 
   // ── Mutations ──
 
-  // 1. Yangi buyurtma yaratish
-  // Concurrency muammo bo'lsa 3 marta retry (300ms, 600ms oraliq)
+  // 1. Yangi buyurtma yaratish — 5 marta retry, exponential backoff
   const createMutation = useMutation({
     mutationFn: async (data) => {
       let lastErr;
-      for (let attempt = 1; attempt <= 3; attempt++) {
+      for (let attempt = 1; attempt <= 5; attempt++) {
         try {
           const res = await orderAPI.create(data);
           lastErr = null;
           return res;
         } catch (err) {
           lastErr = err;
-          if (attempt < 3) await new Promise(r => setTimeout(r, 300 * attempt));
+          if (attempt < 5) await new Promise(r => setTimeout(r, 400 * attempt));
         }
       }
       throw lastErr;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['orders']);
-      queryClient.invalidateQueries(['orders', 'my-active']);
-      queryClient.invalidateQueries(['tables']);
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', 'my-active'] });
+      queryClient.invalidateQueries({ queryKey: ['tables'] });
       toast.success("Buyurtma qabul qilindi!");
       clearAll();
     },
@@ -278,39 +286,55 @@ const POSTerminal = () => {
   });
 
   // 2. Mavjud buyurtmaga mahsulot qo'shish (addMode)
-  // EF Core optimistic concurrency muammosini oldini olish uchun:
-  // har bir item ketma-ket yuboriladi, xato bo'lsa 3 marta retry (300ms oraliq)
+  // EF Core optimistic concurrency: har bir item uchun 6 marta retry,
+  // exponential backoff (400ms, 800ms, 1200ms, 1600ms, 2000ms).
+  // Itemlar orasida 200ms kutiladi.
   const addToExistingMutation = useMutation({
     mutationFn: async () => {
-      for (const item of cart) {
-        let lastErr;
-        for (let attempt = 1; attempt <= 3; attempt++) {
+      const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+      const MAX_ATTEMPTS = 6;
+
+      for (let idx = 0; idx < cart.length; idx++) {
+        const item = cart[idx];
+        let lastErr = null;
+
+        for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
           try {
             await orderAPI.increaseItem(editingOrderId, item.productId, item.count);
             lastErr = null;
             break;
           } catch (err) {
             lastErr = err;
-            if (attempt < 3) {
-              await new Promise(r => setTimeout(r, 300 * attempt));
+            if (attempt < MAX_ATTEMPTS) {
+              await sleep(400 * attempt); // 400, 800, 1200, 1600, 2000ms
             }
           }
         }
+
         if (lastErr) throw lastErr;
+
+        // Itemlar orasida kichik pauza (keyingi item uchun DB versiyasi yangilansin)
+        if (idx < cart.length - 1) await sleep(200);
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['order', editingOrderId]);
-      queryClient.invalidateQueries(['orders']);
-      queryClient.invalidateQueries(['orders', 'my-active']);
-      queryClient.invalidateQueries(['tables']);
+      queryClient.invalidateQueries({ queryKey: ['order', editingOrderId] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', 'my-active'] });
+      queryClient.invalidateQueries({ queryKey: ['tables'] });
       toast.success("Mahsulotlar qo'shildi!");
       clearAll();
     },
     onError: (err) => {
-      const msg = err?.response?.data?.message || err?.response?.data?.title || err?.message || '';
+      const data  = err?.response?.data;
+      const msg   = (typeof data === 'string' ? data : null)
+                 || data?.detail
+                 || data?.message
+                 || data?.title
+                 || err?.message
+                 || '';
       if (msg.toLowerCase().includes('concurren') || msg.toLowerCase().includes('affect')) {
-        toast.error("Buyurtma boshqa tomondan o'zgartirilgan. Iltimos qaytadan urining.");
+        toast.error("Server band, iltimos bir necha soniyadan keyin qayta urining.");
       } else {
         toast.error(msg || "Qo'shishda xatolik");
       }

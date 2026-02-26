@@ -64,8 +64,8 @@ function RevenueChart({ data }) {
     Daromad: val(r, 'totalRevenue', 'revenue', 'count'),
   }));
   return (
-    <div style={{ width: '100%', height: 320 }}>
-      <ResponsiveContainer>
+    <div style={{ width: '100%', height: 320, minWidth: 0 }}>
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={{ top: 8, right: 16, left: 16, bottom: 60 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#6b7280' }} angle={-35} textAnchor="end" interval={0} />
@@ -86,8 +86,8 @@ function SoldChart({ data }) {
     .map((r) => ({ name: nameOf(r), Sotilgan: val(r, 'totalQuantitySold', 'count') }));
   const barH = Math.max(260, chartData.length * 36);
   return (
-    <div style={{ width: '100%', height: barH }}>
-      <ResponsiveContainer>
+    <div style={{ width: '100%', height: barH, minWidth: 0 }}>
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} layout="vertical" margin={{ top: 8, right: 40, left: 8, bottom: 8 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
           <XAxis type="number" tick={{ fontSize: 11, fill: '#6b7280' }} />
@@ -122,8 +122,8 @@ function PriceChart({ data }) {
     );
   }
   return (
-    <div style={{ width: '100%', height: 320 }}>
-      <ResponsiveContainer>
+    <div style={{ width: '100%', height: 320, minWidth: 0 }}>
+      <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartData} margin={{ top: 8, right: 16, left: 16, bottom: 60 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
           <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#6b7280' }} angle={-35} textAnchor="end" interval={0} />
@@ -155,8 +155,8 @@ function ShareChart({ data }) {
     );
   };
   return (
-    <div style={{ width: '100%', height: 360 }}>
-      <ResponsiveContainer>
+    <div style={{ width: '100%', height: 360, minWidth: 0 }}>
+      <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie data={pieData} cx="50%" cy="50%" innerRadius={70} outerRadius={130} dataKey="value" labelLine={false} label={renderLabel}>
             {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
@@ -277,6 +277,7 @@ export default function ProductAnalyticsPanel() {
     queryKey: ['analytics', 'product-stats', filter],
     queryFn: () => analyticsAPI.getProductStats(filter),
     enabled: customReady,
+    select: (d) => (Array.isArray(d) ? d : []),
   });
 
   return (

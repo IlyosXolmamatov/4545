@@ -9,6 +9,9 @@ import ConfirmModal from './ConfirmModal';
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
+// Vositachilik haqqi (kerak bo'lsa shu yerdan o'zgartiring)
+const COMMISSION_RATE = 0.15;
+
 const formatDate = (d) => {
   if (!d) return '—';
   const date = new Date(d);
@@ -142,11 +145,23 @@ export default function OrderViewModal({ order, onClose }) {
             </div>
 
             {/* ── TOTAL ── */}
-            <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
-              <div className="flex justify-between">
-                <span className="font-bold text-gray-900 dark:text-white">Umumiy:</span>
-                <span className="font-bold text-gray-900 dark:text-white text-base">
+            <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 space-y-1.5">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Jami savdo:</span>
+                <span className="font-semibold text-gray-800 dark:text-gray-200">
                   {formatPrice(current.totalAmount)}
+                </span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-rose-500">Vositachilik haqqi ({COMMISSION_RATE * 100}%):</span>
+                <span className="font-semibold text-rose-500">
+                  {formatPrice(Math.round((current.totalAmount || 0) * COMMISSION_RATE))}
+                </span>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-gray-200 dark:border-gray-700">
+                <span className="font-bold text-gray-900 dark:text-white">Sof daromad:</span>
+                <span className="font-bold text-gray-900 dark:text-white text-base">
+                  {formatPrice(Math.round((current.totalAmount || 0) * (1 - COMMISSION_RATE)))}
                 </span>
               </div>
             </div>
@@ -200,7 +215,7 @@ export default function OrderViewModal({ order, onClose }) {
                     onClick={() => {
                       const items = current.items || [];
                       const subtotal = items.reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0);
-                      const serviceCharge = Math.round(subtotal * 0.15);
+                      const serviceCharge = Math.round(subtotal * COMMISSION_RATE);
                       const grandTotal = subtotal + serviceCharge;
                       fetch('/printer/print', {
                         method: 'POST',

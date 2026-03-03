@@ -97,7 +97,6 @@ export const orderAPI = {
    * @param {{ userId: string, tableId: string|null, orderType: number, items: {productId:string, count:number}[] }} data
    */
   create: async (data) => {
-    console.log(data);
     const res = await api.post('/Order/Create', data);
 
     return res.data;

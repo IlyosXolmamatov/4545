@@ -35,7 +35,7 @@ const getUserName = (u) => {
 };
 
 const sendToPrinter = (url, payload) => {
-  console.log(`[PRINTER] → ${url}`, JSON.stringify(payload, null, 2));
+  // console.log(`[PRINTER] → ${url}`, JSON.stringify(payload, null, 2));
   fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -43,7 +43,7 @@ const sendToPrinter = (url, payload) => {
   })
     .then(async (res) => {
       const text = await res.text();
-      console.log(`[PRINTER] ← ${url} | status: ${res.status}`, text);
+      // console.log(`[PRINTER] ← ${url} | status: ${res.status}`, text);
     })
     .catch((e) => {
       console.error(`[PRINTER] ✗ ${url} | error: ${e.message}`);
@@ -55,12 +55,9 @@ const TERMINAL_TAG_STR = { Oshxona: 1, Somsaxona: 2, Kassa: 3, Bar: 4, Extra: 5 
 const resolveTag = (tag) => typeof tag === 'number' ? tag : (TERMINAL_TAG_STR[tag] ?? 1);
 
 const autoPrint = (cartItems, sku, tableNumber, waiterName) => {
-  console.log('[PRINT] autoPrint called | sku:', sku, '| items:', cartItems.map(i => ({ name: i.name, terminalTag: i.terminalTag })));
-
+ 
   const kitchenItems = cartItems.filter(i => resolveTag(i.terminalTag) === 1);
   const somsaItems   = cartItems.filter(i => resolveTag(i.terminalTag) === 2);
-
-  console.log('[PRINT] kitchen:', kitchenItems.length, '| somsa:', somsaItems.length);
 
   if (kitchenItems.length > 0) {
     sendToPrinter('/printer/print-kitchen', {
@@ -330,7 +327,6 @@ const POSTerminal = () => {
       throw lastErr;
     },
     onSuccess: (data) => {
-      console.log('[ORDER] onSuccess data:', data);
       if (printQueueRef.current) {
         const { cart: savedCart, tableNumber } = printQueueRef.current;
         const sku = data?.sku ?? data?.orderSku ?? '';

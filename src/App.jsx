@@ -17,6 +17,7 @@ import CategoriesPage from './pages/MenuPage';
 import TablesPage from './pages/TablesPage';
 import OrdersPage from './pages/OrdersPage';
 import POSTerminal from './pages/POSTerminal';
+import AnalyticsPage from './pages/AnalyticsPage';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,6 +92,14 @@ function App() {
               element={
                 <ProtectedRoute permission="Order_Create">
                   <POSTerminal />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/analytics"
+              element={
+                <ProtectedRoute role={1}>
+                  <AnalyticsPage />
                 </ProtectedRoute>
               }
             />

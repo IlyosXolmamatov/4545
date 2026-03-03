@@ -28,7 +28,8 @@ export const analyticsAPI = {
    */
   getTopProducts: async ({ period = 'Weekly', startDate, endDate, topCount = 5 } = {}) => {
     const res = await api.get('/Analytics/products', { params: buildParams(period, startDate, endDate, { topCount }) });
-    return res.data;
+    const d = res.data;
+    return Array.isArray(d) ? d : (Array.isArray(d?.topProducts) ? d.topProducts : []);
   },
 
   /**
@@ -45,8 +46,35 @@ export const analyticsAPI = {
    * Barcha mahsulotlar statistikasi
    * GET /Analytics/products?period=Weekly&topCount=1000
    */
+  /**
+   * Ofitsantlar statistikasi
+   * GET /Analytics/waiters?period=Daily
+   * Response: { orderRankings: [{waiterId, waiterName, totalOrders, totalRevenue, rank}], revenueRankings: [...] }
+   */
+  getWaiters: async ({ period = 'Daily', startDate, endDate } = {}) => {
+    const res = await api.get('/Analytics/waiters', { params: buildParams(period, startDate, endDate) });
+    return res.data;
+  },
+
+  /**
+   * Eng band soatlar
+   * GET /Analytics/peak-time?period=Daily
+   * Response: [{ hour, totalOrders, totalRevenue, uniqueCustomers }, ..., { startDate, endDate }]
+   */
+  getPeakTime: async ({ period = 'Daily', startDate, endDate } = {}) => {
+    const res = await api.get('/Analytics/peak-time', { params: buildParams(period, startDate, endDate) });
+    const d = res.data;
+    if (!Array.isArray(d)) {
+      // Response: { peakTimes: [...], startDate, endDate }
+      const arr = d?.peakTimes ?? d?.peakHours ?? d?.data ?? d?.hours ?? [];
+      return Array.isArray(arr) ? arr.filter((r) => r.hour != null) : [];
+    }
+    return d.filter((r) => r.hour != null);
+  },
+
   getProductStats: async ({ period = 'Weekly', startDate, endDate } = {}) => {
     const res = await api.get('/Analytics/products', { params: buildParams(period, startDate, endDate, { topCount: 1000 }) });
-    return res.data;
+    const d = res.data;
+    return Array.isArray(d) ? d : (Array.isArray(d?.topProducts) ? d.topProducts : []);
   },
 };

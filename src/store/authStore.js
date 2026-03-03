@@ -29,7 +29,6 @@ const normalizeUser = (decoded) => {
     typeof roleRaw === 'number' ? roleRaw :
       typeof roleRaw === 'string' ? (ROLE_MAP[roleRaw] ?? 0) : 0;
 
-  console.log(decoded.permission);
 
   // User ID: turli claim nomlar
   const id =

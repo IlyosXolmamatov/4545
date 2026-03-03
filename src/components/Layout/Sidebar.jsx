@@ -5,16 +5,18 @@ import { useThemeStore } from '../../store/themeStore';
 import ConfirmModal from '../ConfirmModal';
 import {
   Home, Users, ShoppingBag, Table2,
-  ShoppingCart, CreditCard, LogOut, X, Sun, Moon,
+  ShoppingCart, CreditCard, LogOut, X, Sun, Moon, BarChart2,
 } from 'lucide-react';
 
+// role: null = barcha rollar, number = faqat shu rol
 const ALL_MENU_ITEMS = [
-  { label: 'Dashboard',    icon: Home,         path: '/dashboard', permission: null           },
-  { label: 'Xodimlar',     icon: Users,        path: '/users',     permission: 'User_Read'    },
-  { label: 'Menyu',        icon: ShoppingBag,  path: '/products',  permission: 'Product_Read' },
-  { label: 'Stollar',      icon: Table2,       path: '/tables',    permission: 'Table_Read'   },
-  { label: 'Buyurtmalar',  icon: ShoppingCart, path: '/orders',    permission: 'Order_Read'   },
-  { label: 'POS Terminal', icon: CreditCard,   path: '/pos',       permission: 'Order_Create' },
+  { label: 'Dashboard',    icon: Home,         path: '/dashboard',  permission: null,           role: null },
+  { label: 'Xodimlar',     icon: Users,        path: '/users',      permission: 'User_Read',    role: null },
+  { label: 'Menyu',        icon: ShoppingBag,  path: '/products',   permission: 'Product_Read', role: null },
+  { label: 'Stollar',      icon: Table2,       path: '/tables',     permission: 'Table_Read',   role: null },
+  { label: 'Buyurtmalar',  icon: ShoppingCart, path: '/orders',     permission: 'Order_Read',   role: null },
+  { label: 'POS Terminal', icon: CreditCard,   path: '/pos',        permission: 'Order_Create', role: null },
+  { label: 'Analitika',    icon: BarChart2,    path: '/analytics',  permission: null,           role: 1    },
 ];
 
 const getRoleColor = (role) => {
@@ -28,9 +30,11 @@ const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout, hasPermission, getPanelName } = useAuthStore();
   const { isDark, toggle } = useThemeStore();
 
-  const visibleItems = ALL_MENU_ITEMS.filter((item) =>
-    item.permission === null ? true : hasPermission(item.permission)
-  );
+  const visibleItems = ALL_MENU_ITEMS.filter((item) => {
+    if (item.role !== null && item.role !== user?.role) return false;
+    if (item.permission === null) return true;
+    return hasPermission(item.permission);
+  });
 
   const [dlg, setDlg] = useState(null);
 

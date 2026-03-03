@@ -277,7 +277,7 @@ export default function ProductAnalyticsPanel() {
     queryKey: ['analytics', 'product-stats', filter],
     queryFn: () => analyticsAPI.getProductStats(filter),
     enabled: customReady,
-    select: (d) => (Array.isArray(d) ? d : []),
+    select: (d) => Array.isArray(d) ? d : (Array.isArray(d?.topProducts) ? d.topProducts : []),
   });
 
   return (

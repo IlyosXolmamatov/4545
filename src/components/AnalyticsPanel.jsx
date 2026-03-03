@@ -236,14 +236,28 @@ export default function AnalyticsPanel() {
           <Section title="Top 5 mahsulotlar">
             {productsLoading ? <LoadingBox /> : productsError ? <ErrorBox msg="Mahsulotlar yuklanmadi" /> : (
               productsData.length === 0 ? <EmptyBox /> : (
-                <div style={{ width: '100%', height: 220 }}>
+                <div style={{ width: '100%', height: Math.max(220, productsData.length * 44) }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={productsData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis type="number" tick={{ fontSize: 11 }} />
-                      <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 11 }} />
-                      <Tooltip />
-                      <Bar dataKey="count" name="Soni" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                    <BarChart
+                      data={productsData.map(r => ({
+                        name: r.productName || r.name || '—',
+                        Sotilgan: r.totalQuantitySold ?? 0,
+                        Daromad:  r.totalRevenue ?? 0,
+                      }))}
+                      layout="vertical"
+                      margin={{ top: 4, right: 48, left: 8, bottom: 4 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                      <XAxis type="number" tick={{ fontSize: 11, fill: '#6b7280' }} />
+                      <YAxis dataKey="name" type="category" width={130} tick={{ fontSize: 11, fill: '#6b7280' }} />
+                      <Tooltip
+                        formatter={(value, name) =>
+                          name === 'Daromad'
+                            ? [`${Number(value).toLocaleString()} so'm`, name]
+                            : [value, name]
+                        }
+                      />
+                      <Bar dataKey="Sotilgan" name="Sotilgan (dona)" fill="#f59e0b" radius={[0, 4, 4, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

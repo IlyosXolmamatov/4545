@@ -69,8 +69,6 @@ export const orderAPI = {
    */
   getAll: async () => {
     const res = await api.get('/Order/GetAll');
-    console.log(res.data);
-
     return Array.isArray(res.data) ? res.data.map(normalizeOrder) : res.data;
   },
 

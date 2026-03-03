@@ -213,7 +213,16 @@ const TablesPage = () => {
       toast.success("Stol qo'shildi");
       closeModal();
     },
-    onError: (err) => toast.error(err.response?.data?.message ?? "Qo'shishda xatolik"),
+    onError: (err) => {
+      const data = err.response?.data;
+      const msg = (typeof data === 'string' ? data : null)
+                || data?.message
+                || data?.title
+                || data?.detail
+                || err?.message
+                || "Qo'shishda xatolik";
+      toast.error(msg);
+    },
   });
 
   const updateMutation = useMutation({
@@ -226,7 +235,14 @@ const TablesPage = () => {
     },
     onError: (err) => {
       console.error('Update error:', err.response?.data || err.message);
-      const msg = err.response?.data?.message || err.response?.data || 'Yangilashda xatolik';
+      const data = err.response?.data;
+      const msg = (typeof data === 'string' ? data : null)
+                || data?.message
+                || data?.title
+                || data?.detail
+                || (data?.errors ? Object.values(data.errors).flat().join(', ') : null)
+                || err?.message
+                || 'Yangilashda xatolik';
       toast.error(msg);
     },
   });
@@ -301,7 +317,7 @@ const TablesPage = () => {
       capacity:    cap,
       tableStatus: parseInt(formData.tableStatus),
       tableType:   parseInt(formData.tableType),
-      waiterName:  formData.waiterName?.trim() || undefined,
+      waiterName:  formData.waiterName?.trim() || '',
     };
 
     if (isEditing) updateMutation.mutate({ id: editId, ...payload });

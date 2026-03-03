@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -6,7 +6,7 @@ import {
   ShoppingCart, Plus, Minus, Trash2,
   Loader2, Package, UtensilsCrossed, ShoppingBag,
   ArrowLeft, Search, X, ClipboardList, ChevronRight,
-  MapPin, Crown, Users, Clock,
+  MapPin, Crown, Users, Clock, Printer,
 } from 'lucide-react';
 
 import { orderAPI, OrderType } from '../api/orders';
@@ -24,6 +24,62 @@ const getUserId = (user) => {
     user['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ??
     null
   );
+};
+
+const getUserName = (u) => {
+  if (!u) return '';
+  return (
+    u.name ?? u.unique_name ?? u.UserName ?? u.userName ??
+    u.fullName ?? u.FullName ?? u.Name ?? ''
+  );
+};
+
+const sendToPrinter = (url, payload) => {
+  console.log(`[PRINTER] → ${url}`, JSON.stringify(payload, null, 2));
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(async (res) => {
+      const text = await res.text();
+      console.log(`[PRINTER] ← ${url} | status: ${res.status}`, text);
+    })
+    .catch((e) => {
+      console.error(`[PRINTER] ✗ ${url} | error: ${e.message}`);
+    });
+};
+
+// terminalTag string yoki number bo'lishi mumkin → normalizatsiya
+const TERMINAL_TAG_STR = { Oshxona: 1, Somsaxona: 2, Kassa: 3, Bar: 4, Extra: 5 };
+const resolveTag = (tag) => typeof tag === 'number' ? tag : (TERMINAL_TAG_STR[tag] ?? 1);
+
+const autoPrint = (cartItems, sku, tableNumber, waiterName) => {
+  console.log('[PRINT] autoPrint called | sku:', sku, '| items:', cartItems.map(i => ({ name: i.name, terminalTag: i.terminalTag })));
+
+  const kitchenItems = cartItems.filter(i => resolveTag(i.terminalTag) === 1);
+  const somsaItems   = cartItems.filter(i => resolveTag(i.terminalTag) === 2);
+
+  console.log('[PRINT] kitchen:', kitchenItems.length, '| somsa:', somsaItems.length);
+
+  if (kitchenItems.length > 0) {
+    sendToPrinter('/printer/print-kitchen', {
+      orderSku: String(sku ?? ''),
+      tableNumber: tableNumber ?? 0,
+      waiterName: waiterName ?? '',
+      totalAmount: kitchenItems.reduce((s, i) => s + i.price * i.count, 0),
+      items: kitchenItems.map(i => ({ name: i.name, quantity: i.count, price: i.price })),
+    });
+  }
+  if (somsaItems.length > 0) {
+    sendToPrinter('/printer/print-somsa', {
+      orderSku: String(sku ?? ''),
+      tableNumber: tableNumber ?? 0,
+      waiterName: waiterName ?? '',
+      totalAmount: somsaItems.reduce((s, i) => s + i.price * i.count, 0),
+      items: somsaItems.map(i => ({ name: i.name, quantity: i.count, price: i.price })),
+    });
+  }
 };
 
 const fmtTime = (d) => {
@@ -188,6 +244,8 @@ const POSTerminal = () => {
   const waiter = isWaiter();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  const printQueueRef = useRef(null);
+
   // ── Navigation ──
   const [step, setStep]                       = useState('tables');
   const [cartOpen, setCartOpen]               = useState(false);
@@ -271,7 +329,14 @@ const POSTerminal = () => {
       }
       throw lastErr;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('[ORDER] onSuccess data:', data);
+      if (printQueueRef.current) {
+        const { cart: savedCart, tableNumber } = printQueueRef.current;
+        const sku = data?.sku ?? data?.orderSku ?? '';
+        autoPrint(savedCart, sku, tableNumber, getUserName(user));
+        printQueueRef.current = null;
+      }
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['orders', 'my-active'] });
       queryClient.invalidateQueries({ queryKey: ['tables'] });
@@ -305,6 +370,8 @@ const POSTerminal = () => {
             break;
           } catch (err) {
             lastErr = err;
+            // 400 = server validatsiya xatosi, retry foydasi yo'q
+            if (err?.response?.status === 400) break;
             if (attempt < MAX_ATTEMPTS) {
               await sleep(400 * attempt); // 400, 800, 1200, 1600, 2000ms
             }
@@ -318,6 +385,11 @@ const POSTerminal = () => {
       }
     },
     onSuccess: () => {
+      if (printQueueRef.current) {
+        const { cart: savedCart, tableNumber, sku } = printQueueRef.current;
+        autoPrint(savedCart, sku, tableNumber, getUserName(user));
+        printQueueRef.current = null;
+      }
       queryClient.invalidateQueries({ queryKey: ['order', editingOrderId] });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['orders', 'my-active'] });
@@ -326,14 +398,17 @@ const POSTerminal = () => {
       clearAll();
     },
     onError: (err) => {
-      const data  = err?.response?.data;
-      const msg   = (typeof data === 'string' ? data : null)
-                 || data?.detail
-                 || data?.message
-                 || data?.title
-                 || err?.message
-                 || '';
-      if (msg.toLowerCase().includes('concurren') || msg.toLowerCase().includes('affect')) {
+      const status = err?.response?.status;
+      const data   = err?.response?.data;
+      const msg    = (typeof data === 'string' ? data : null)
+                  || data?.detail
+                  || data?.message
+                  || data?.title
+                  || err?.message
+                  || '';
+      if (status === 400) {
+        toast.error(msg || "Mahsulot qo'shib bo'lmadi (400)");
+      } else if (msg.toLowerCase().includes('concurren') || msg.toLowerCase().includes('affect')) {
         toast.error("Server band, iltimos bir necha soniyadan keyin qayta urining.");
       } else {
         toast.error(msg || "Qo'shishda xatolik");
@@ -346,7 +421,7 @@ const POSTerminal = () => {
     setCart(prev => {
       const ex = prev.find(i => i.productId === product.id);
       if (ex) return prev.map(i => i.productId === product.id ? { ...i, count: i.count + 1 } : i);
-      return [...prev, { productId: product.id, name: product.name, price: product.price, count: 1 }];
+      return [...prev, { productId: product.id, name: product.name, price: product.price, count: 1, terminalTag: resolveTag(product.terminalTag ?? 1) }];
     });
 
   const increaseCart = (pid) =>
@@ -387,6 +462,11 @@ const POSTerminal = () => {
   const handleSubmit = () => {
     if (addMode) {
       if (cart.length === 0) { toast.error("Yangi mahsulot qo'shmadingiz"); return; }
+      printQueueRef.current = {
+        cart: [...cart],
+        tableNumber: editingOrder?.tableNumber ?? 0,
+        sku: editingOrder?.sku ?? '',
+      };
       addToExistingMutation.mutate();
       return;
     }
@@ -400,11 +480,46 @@ const POSTerminal = () => {
     const userId = getUserId(user);
     if (!userId) { toast.error("Foydalanuvchi ma'lumotlari topilmadi"); return; }
 
+    printQueueRef.current = {
+      cart: [...cart],
+      tableNumber: selectedTable?.tableNumber ?? 0,
+    };
+
     createMutation.mutate({
       userId,
       ...(orderType === OrderType.DineIn && selectedTableId ? { tableId: selectedTableId } : {}),
       orderType,
       items: cart.map(i => ({ productId: i.productId, count: i.count })),
+    });
+  };
+
+  const handleKassaPrint = () => {
+    let allItems = [];
+    let sku = '';
+    let tableNum = 0;
+
+    if (addMode && editingOrder) {
+      allItems = [
+        ...(editingOrder.items || []).map(i => ({ name: i.productName, count: i.count, price: i.priceAtTime ?? 0 })),
+        ...cart.map(i => ({ name: i.name, count: i.count, price: i.price })),
+      ];
+      sku = editingOrder.sku ?? '';
+      tableNum = editingOrder.tableNumber ?? 0;
+    } else {
+      allItems = cart.map(i => ({ name: i.name, count: i.count, price: i.price }));
+      tableNum = selectedTable?.tableNumber ?? 0;
+    }
+
+    const subtotal = allItems.reduce((s, i) => s + i.price * i.count, 0);
+    const serviceCharge = Math.round(subtotal * 0.15);
+    const grandTotal = subtotal + serviceCharge;
+
+    sendToPrinter('/printer/print', {
+      orderSku: String(sku),
+      tableNumber: tableNum,
+      waiterName: getUserName(user),
+      totalAmount: grandTotal,
+      items: allItems.map(i => ({ name: i.name, quantity: i.count, price: i.price })),
     });
   };
 
@@ -952,6 +1067,15 @@ const POSTerminal = () => {
             >
               Bekor
             </button>
+            {!waiter && (cart.length > 0 || (addMode && editingOrder)) && (
+              <button
+                onClick={handleKassaPrint}
+                className="px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold
+                           text-sm transition-colors flex items-center gap-1.5 shadow-lg shadow-blue-200 dark:shadow-blue-900/30"
+              >
+                <Printer size={15} /> Chek
+              </button>
+            )}
             <button
               onClick={handleSubmit}
               disabled={isPending || (addMode && cart.length === 0)}

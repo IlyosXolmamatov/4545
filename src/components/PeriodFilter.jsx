@@ -2,26 +2,25 @@ import { useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 
 const PERIODS = [
-  { value: 1, label: 'Kunlik' },
-  { value: 2, label: 'Haftalik' },
-  { value: 3, label: 'Oylik' },
-  { value: 4, label: 'Yillik' },
-  { value: 5, label: 'Maxsus' },
+  { value: 'Daily',   label: 'Kunlik' },
+  { value: 'Weekly',  label: 'Haftalik' },
+  { value: 'Monthly', label: 'Oylik' },
+  { value: 'Yearly',  label: 'Yillik' },
+  { value: 'Custom',  label: 'Maxsus' },
 ];
 
 /**
- * @param {{ filter: {period:number, startDate:string|null, endDate:string|null}, onChange: (f)=>void }} props
+ * @param {{ filter: {period:string, startDate:string|null, endDate:string|null}, onChange: (f)=>void }} props
  */
 export default function PeriodFilter({ filter, onChange }) {
   const [localStart, setLocalStart] = useState('');
   const [localEnd, setLocalEnd]     = useState('');
 
   const handlePeriod = (p) => {
-    if (p !== 5) {
+    if (p !== 'Custom') {
       onChange({ period: p, startDate: null, endDate: null });
     } else {
-      // Switch to custom — don't fire query until user presses Apply
-      onChange({ period: 5, startDate: null, endDate: null });
+      onChange({ period: 'Custom', startDate: null, endDate: null });
       setLocalStart('');
       setLocalEnd('');
     }
@@ -30,7 +29,7 @@ export default function PeriodFilter({ filter, onChange }) {
   const handleApply = () => {
     if (!localStart || !localEnd) return;
     onChange({
-      period: 5,
+      period: 'Custom',
       startDate: localStart + 'T00:00:00',
       endDate:   localEnd   + 'T23:59:59',
     });
@@ -38,7 +37,6 @@ export default function PeriodFilter({ filter, onChange }) {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {/* Period buttons */}
       {PERIODS.map((p) => (
         <button
           key={p.value}
@@ -53,8 +51,7 @@ export default function PeriodFilter({ filter, onChange }) {
         </button>
       ))}
 
-      {/* Custom date range */}
-      {filter.period === 5 && (
+      {filter.period === 'Custom' && (
         <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
           <CalendarDays className="w-4 h-4 text-gray-400 hidden sm:block" />
           <input

@@ -342,8 +342,8 @@ const MenuPage = () => {
       fd.append('Name', p.name);
       fd.append('Description', p.description ?? '');
       fd.append('CategoryId', p.categoryId);
-      fd.append('Price', p.price);
-      fd.append('TerminalTag', parseInt(p.terminalTag));
+      fd.append('Price', parseFloat(String(p.price).replace(',', '.')));
+      fd.append('TerminalTag', parseInt(p.terminalTag) || 1);
       fd.append('IsActive', isActive);
       return productAPI.update(fd);
     },
@@ -433,12 +433,11 @@ const MenuPage = () => {
           const canDel  = hasPermission('Category_Delete');
 
           return (
-            <div key={cat.id} className="flex-shrink-0 relative group/pill">
+            <div key={cat.id} className="flex-shrink-0 flex items-center gap-1 group/pill">
+              {/* Kategoriya tugmasi */}
               <button
                 onClick={() => setSelectedCategory(isActive ? null : cat.id)}
-                className={`flex items-center gap-2 text-sm font-semibold transition-all border rounded-full whitespace-nowrap ${
-                  canEdit || canDel ? 'pl-3.5 pr-10' : 'px-3.5'
-                } py-2 ${
+                className={`flex items-center gap-2 text-sm font-semibold transition-all border rounded-full whitespace-nowrap px-3.5 py-2 ${
                   isActive
                     ? `${pal.active} text-white border-transparent shadow-md`
                     : `${pal.idle} border hover:shadow-sm`
@@ -451,18 +450,16 @@ const MenuPage = () => {
                 </span>
               </button>
 
-              {/* Edit / Delete — hover da ko'rinadi */}
+              {/* Edit / Delete — tashqarida, hover'da chiqadi */}
               {(canEdit || canDel) && (
-                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover/pill:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-0 group-hover/pill:opacity-100 translate-x-1 group-hover/pill:translate-x-0 transition-all duration-200 pointer-events-none group-hover/pill:pointer-events-auto">
                   {canEdit && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setCatModal(cat); }}
                       title="Tahrirlash"
-                      className={`w-6 h-6 flex items-center justify-center rounded-full transition-colors ${
-                        isActive ? 'hover:bg-white/25 text-white' : 'hover:bg-black/10 dark:hover:bg-white/10 text-current'
-                      }`}
+                      className="w-7 h-7 flex items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white dark:hover:bg-blue-500 dark:hover:text-white transition-colors shadow-sm"
                     >
-                      <Edit2 size={11} />
+                      <Edit2 size={13} />
                     </button>
                   )}
                   {canDel && (
@@ -476,11 +473,9 @@ const MenuPage = () => {
                         });
                       }}
                       title="O'chirish"
-                      className={`w-6 h-6 flex items-center justify-center rounded-full transition-colors ${
-                        isActive ? 'hover:bg-white/25 text-white' : 'hover:bg-red-100 dark:hover:bg-red-900/30 hover:text-red-600 text-current'
-                      }`}
+                      className="w-7 h-7 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/40 text-red-500 dark:text-red-400 hover:bg-red-500 hover:text-white dark:hover:bg-red-500 dark:hover:text-white transition-colors shadow-sm"
                     >
-                      <X size={11} />
+                      <Trash2 size={13} />
                     </button>
                   )}
                 </div>

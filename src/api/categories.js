@@ -4,6 +4,7 @@ export const categoryAPI = {
   // 1. GET ALL
   getAll: async () => {
     const response = await axiosClient.get('/Category/GetAllCategories');
+    // console.log(response.data)
     return response.data;
   },
 
@@ -26,7 +27,7 @@ export const categoryAPI = {
 
   update: async ({ id, name }) => {
     // NOTE: endpoint name fixed to UpdateCategory — confirm with backend if different
-    const response = await axiosClient.put('/Category/UpdateCategory', {
+    const response = await axiosClient.put('/Category/UpdateCatigory', {
       id,
       name,
     });

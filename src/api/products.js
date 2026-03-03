@@ -25,6 +25,8 @@ export const productAPI = {
   // [HttpGet] GetAllProductsAsync
   getAll: async () => {
     const response = await axiosClient.get('/Product/GetAllProducts');
+
+
     return response.data;
   },
 

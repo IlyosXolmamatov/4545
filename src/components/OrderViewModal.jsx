@@ -195,59 +195,37 @@ export default function OrderViewModal({ order, onClose }) {
                 >
                   Yopish
                 </button>
-                {!waiter && <button
-                onClick={() => {
-                  try {
-                    const statusLabel = ORDER_STATUS_LABELS[current.orderStatus] ?? '';
-                    const html = `
-                      <html>
-                        <head>
-                          <title>Buyurtma #${current.sku}</title>
-                          <style>
-                            body{ font-family: Arial, Helvetica, sans-serif; padding:20px }
-                            h1{ font-size:20px }
-                            table{ width:100%; border-collapse:collapse; margin-top:12px }
-                            td,th{ padding:8px; border-bottom:1px solid #eee }
-                          </style>
-                        </head>
-                        <body>
-                          <h1>Buyurtma #${current.sku}</h1>
-                          <p>Status: ${statusLabel}</p>
-                          <p>Stol: ${tableNum ? '#'+tableNum : 'TakeOut'}</p>
-                          <p>Ofitsant: ${waiterName}</p>
-                          <p>Vaqt: ${formatDate(createdAt)}</p>
-                          <table>
-                            <thead><tr><th>Mahsulot</th><th>Soni</th><th>Narx</th></tr></thead>
-                            <tbody>
-                              ${ (current.items || []).map(i => `<tr><td>${i.productName}</td><td>${i.count}</td><td>${(i.priceAtTime||0).toLocaleString('ru-RU')} so'm</td></tr>`).join('') }
-                            </tbody>
-                          </table>
-                          <p style="margin-top:12px; font-weight:bold">Jami: ${formatPrice(current.totalAmount)}</p>
-                        </body>
-                      </html>`;
-
-                    const printWindow = window.open('', '_blank', 'width=600,height=800');
-                    if (printWindow) {
-                      printWindow.document.open();
-                      printWindow.document.write(html);
-                      printWindow.document.close();
-                      printWindow.focus();
-                      setTimeout(() => { printWindow.print(); printWindow.close(); }, 300);
-                    } else {
-                      window.print();
-                    }
-                  } catch (e) {
-                    console.error('Print error', e);
-                    window.print();
-                  }
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white font-medium
-                           text-sm hover:bg-orange-600 transition-colors flex items-center
-                           justify-center gap-2"
-              >
-                <Printer size={16} />
-                Chop etish
-              </button>}
+                {!waiter && (
+                  <button
+                    onClick={() => {
+                      const items = current.items || [];
+                      const subtotal = items.reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0);
+                      const serviceCharge = Math.round(subtotal * 0.15);
+                      const grandTotal = subtotal + serviceCharge;
+                      fetch('/printer/print', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          orderSku: current.sku ?? '',
+                          tableNumber: tableNum ?? 0,
+                          waiterName: waiterName !== '—' ? waiterName : '',
+                          totalAmount: grandTotal,
+                          items: items.map(i => ({
+                            name: i.productName,
+                            quantity: i.count,
+                            price: i.priceAtTime ?? 0,
+                          })),
+                        }),
+                      }).catch((e) => console.warn('Printer unavailable:', e.message));
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white font-medium
+                               text-sm hover:bg-orange-600 transition-colors flex items-center
+                               justify-center gap-2"
+                  >
+                    <Printer size={16} />
+                    Chop etish
+                  </button>
+                )}
             </div>
             </div>
 

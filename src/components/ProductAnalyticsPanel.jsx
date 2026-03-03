@@ -269,9 +269,9 @@ function DataTable({ data }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function ProductAnalyticsPanel() {
   const [activeTab, setActiveTab] = useState('revenue');
-  const [filter, setFilter] = useState({ period: 1, startDate: null, endDate: null });
+  const [filter, setFilter] = useState({ period: 'Weekly', startDate: null, endDate: null });
 
-  const customReady = filter.period !== 5 || (!!filter.startDate && !!filter.endDate);
+  const customReady = filter.period !== 'Custom' || (!!filter.startDate && !!filter.endDate);
 
   const { data = [], isLoading, isError } = useQuery({
     queryKey: ['analytics', 'product-stats', filter],
@@ -322,7 +322,7 @@ export default function ProductAnalyticsPanel() {
         <div className="flex items-center justify-center h-48 text-red-400 text-sm">
           Ma'lumotlarni yuklashda xatolik
         </div>
-      ) : data.length === 0 ? (
+      ) : !data || data.length === 0 ? (
         <div className="flex items-center justify-center h-48 text-gray-400 dark:text-gray-500 text-sm">
           Hozircha ma'lumot yo'q
         </div>

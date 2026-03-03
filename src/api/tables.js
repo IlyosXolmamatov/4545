@@ -74,7 +74,7 @@ export const tableAPI = {
    */
   getAll: async () => {
     const response = await axiosClient.get('/Table/GetAllTables');
-    console.log(response.data);
+
     return response.data;
   },
 
@@ -119,10 +119,8 @@ export const tableAPI = {
       tableNumber: Number(tableNumber),
       tableStatus: Number(tableStatus),
       tableType: Number(tableType),
-      // capacity and waiterName may be provided by frontend
-      // include them if present in the caller payload
+      waiterName: waiterName ?? '',
       ...(capacity !== undefined && { capacity: Number(capacity) }),
-      ...(waiterName !== undefined && { waiterName }),
     };
     console.log('Update table request:', payload);
     const response = await axiosClient.put('/Table/UpdateTable', payload);

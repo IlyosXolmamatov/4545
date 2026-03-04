@@ -122,7 +122,6 @@ export const tableAPI = {
       waiterName: waiterName ?? '',
       ...(capacity !== undefined && { capacity: Number(capacity) }),
     };
-    console.log('Update table request:', payload);
     const response = await axiosClient.put('/Table/UpdateTable', payload);
     return response.data;
   },

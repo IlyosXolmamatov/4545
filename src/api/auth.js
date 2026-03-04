@@ -22,8 +22,7 @@ export const authAPI = {
           .join('')
       );
       return JSON.parse(jsonPayload);
-    } catch (error) {
-      console.error('Token decode error:', error);
+    } catch {
       return null;
     }
   },

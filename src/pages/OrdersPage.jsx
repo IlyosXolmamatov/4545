@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import {
   Eye, Search, ShoppingBag, Plus, Pencil,
   Clock, CheckCircle, XCircle, Wallet,
-  UtensilsCrossed,
+  UtensilsCrossed, Printer,
 } from 'lucide-react';
+
+const COMMISSION_RATE = 0.15;
 
 import {
   orderAPI,
@@ -47,7 +49,7 @@ const formatTime = (d) => {
 
 // ─── ORDER CARD ───────────────────────────────────────────────────────────────
 
-function OrderCard({ order, onView, onEdit, canEdit }) {
+function OrderCard({ order, onView, onEdit, canEdit, canPrint }) {
   const meta   = STATUS_META[order.orderStatus] ?? STATUS_META[0];
   const Icon   = meta.Icon;
   const items  = order.items ?? [];
@@ -145,6 +147,36 @@ function OrderCard({ order, onView, onEdit, canEdit }) {
           >
             <Pencil size={14} />
             Tahrirlash
+          </button>
+        )}
+
+        {canPrint && (
+          <button
+            onClick={() => {
+              const items = order.items || [];
+              const subtotal = items.reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0);
+              const serviceCharge = Math.round(subtotal * COMMISSION_RATE);
+              fetch('/printer/print', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  orderSku: order.sku ?? '',
+                  tableNumber: order.tableNumber ?? 0,
+                  waiterName: order.waiterName ?? '',
+                  totalAmount: subtotal + serviceCharge,
+                  items: items.map((i) => ({
+                    name: i.productName,
+                    quantity: i.count,
+                    price: i.priceAtTime ?? 0,
+                  })),
+                }),
+              }).catch(() => {});
+            }}
+            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl
+                       bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-colors"
+          >
+            <Printer size={14} />
+            Print
           </button>
         )}
       </div>
@@ -291,6 +323,7 @@ export default function OrdersPage() {
               onView={setViewingOrder}
               onEdit={setEditingOrderId}
               canEdit={canEdit}
+              canPrint={!waiter}
             />
           ))}
         </div>

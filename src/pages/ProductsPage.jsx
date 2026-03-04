@@ -108,7 +108,6 @@ const ProductsPage = () => {
 
   // Xatolarni chiqarish funksiyasi
   const handleError = (err) => {
-    console.error(err);
     const data = err.response?.data;
     const msg = data?.errors 
       ? Object.values(data.errors).flat().join('\n') 

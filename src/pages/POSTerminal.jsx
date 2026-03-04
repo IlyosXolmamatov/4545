@@ -35,19 +35,15 @@ const getUserName = (u) => {
 };
 
 const sendToPrinter = (url, payload) => {
-  // console.log(`[PRINTER] → ${url}`, JSON.stringify(payload, null, 2));
   fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
     .then(async (res) => {
-      const text = await res.text();
-      // console.log(`[PRINTER] ← ${url} | status: ${res.status}`, text);
+      await res.text();
     })
-    .catch((e) => {
-      console.error(`[PRINTER] ✗ ${url} | error: ${e.message}`);
-    });
+    .catch(() => {});
 };
 
 // terminalTag string yoki number bo'lishi mumkin → normalizatsiya

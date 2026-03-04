@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { X, Printer, Loader2 } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 import { orderAPI, OrderStatus, ORDER_STATUS_COLORS, ORDER_TYPE_LABELS, ORDER_STATUS_LABELS } from '../api/orders';
@@ -15,7 +15,6 @@ const COMMISSION_RATE = 0.15;
 const formatDate = (d) => {
   if (!d) return '—';
   const date = new Date(d);
-  // Backend default DateTime (0001-01-01) ni tekshirish
   if (date.getFullYear() < 1900) return '—';
   return date.toLocaleString('ru-RU', {
     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -25,8 +24,6 @@ const formatDate = (d) => {
 
 const formatPrice = (n) => `${(n || 0).toLocaleString('ru-RU')} so'm`;
 
-
-
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
 
 /**
@@ -35,8 +32,7 @@ const formatPrice = (n) => `${(n || 0).toLocaleString('ru-RU')} so'm`;
 export default function OrderViewModal({ order, onClose }) {
   const isOpen = !!order;
   const queryClient = useQueryClient();
-  const { hasPermission, isWaiter } = useAuthStore();
-  const waiter = isWaiter();
+  const { hasPermission } = useAuthStore();
   const [dlg, setDlg] = useState(null);
 
   // GetById orqali to'liq detail — waiterName, tableNumber, createdAt olish uchun
@@ -59,7 +55,6 @@ export default function OrderViewModal({ order, onClose }) {
     },
     onError: () => toast.error('Statusni yangilashda xatolik'),
   });
-
 
   if (!isOpen) return null;
 
@@ -159,9 +154,9 @@ export default function OrderViewModal({ order, onClose }) {
                 </span>
               </div>
               <div className="flex justify-between pt-1 border-t border-gray-200 dark:border-gray-700">
-                <span className="font-bold text-gray-900 dark:text-white">Sof daromad:</span>
-                <span className="font-bold text-gray-900 dark:text-white text-base">
-                  {formatPrice(Math.round((current.totalAmount || 0) * (1 - COMMISSION_RATE)))}
+                <span className="font-bold text-gray-900 dark:text-white">Umumiy to'lanadigan:</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 text-base">
+                  {formatPrice(Math.round((current.totalAmount || 0) * (1 + COMMISSION_RATE)))}
                 </span>
               </div>
             </div>
@@ -210,38 +205,7 @@ export default function OrderViewModal({ order, onClose }) {
                 >
                   Yopish
                 </button>
-                {!waiter && (
-                  <button
-                    onClick={() => {
-                      const items = current.items || [];
-                      const subtotal = items.reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0);
-                      const serviceCharge = Math.round(subtotal * COMMISSION_RATE);
-                      const grandTotal = subtotal + serviceCharge;
-                      fetch('/printer/print', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          orderSku: current.sku ?? '',
-                          tableNumber: tableNum ?? 0,
-                          waiterName: waiterName !== '—' ? waiterName : '',
-                          totalAmount: grandTotal,
-                          items: items.map(i => ({
-                            name: i.productName,
-                            quantity: i.count,
-                            price: i.priceAtTime ?? 0,
-                          })),
-                        }),
-                      }).catch((e) => console.warn('Printer unavailable:', e.message));
-                    }}
-                    className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white font-medium
-                               text-sm hover:bg-orange-600 transition-colors flex items-center
-                               justify-center gap-2"
-                  >
-                    <Printer size={16} />
-                    Chop etish
-                  </button>
-                )}
-            </div>
+              </div>
             </div>
 
           </>

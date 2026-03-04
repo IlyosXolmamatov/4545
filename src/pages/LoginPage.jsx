@@ -21,7 +21,8 @@ export default function LoginPage() {
       toast.success(`Xush kelibsiz, ${user.name}!`);
       navigate('/dashboard', { replace: true });
     } catch (error) {
-      console.error('Login error:', error);
+      const msg = error?.response?.data?.message || error?.response?.data?.title || "Login xatoligi yuz berdi";
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }

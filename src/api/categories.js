@@ -4,7 +4,6 @@ export const categoryAPI = {
   // 1. GET ALL
   getAll: async () => {
     const response = await axiosClient.get('/Category/GetAllCategories');
-    // console.log(response.data)
     return response.data;
   },
 

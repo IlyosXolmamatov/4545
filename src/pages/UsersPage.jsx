@@ -14,9 +14,9 @@ import ConfirmModal from '../components/ConfirmModal';
 // --- BADGE COMPONENTS ---
 
 const ROLE_STYLES = {
-  [UserRole.Admin]:   'bg-purple-100 text-purple-700',
-  [UserRole.Waiter]:  'bg-blue-100   text-blue-700',
-  [UserRole.Cashier]: 'bg-amber-100  text-amber-700',
+  [UserRole.Admin]:   'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300',
+  [UserRole.Waiter]:  'bg-blue-100   dark:bg-blue-900/30  text-blue-700   dark:text-blue-300',
+  [UserRole.Cashier]: 'bg-amber-100  dark:bg-amber-900/30 text-amber-700  dark:text-amber-300',
 };
 
 const RoleBadge = ({ role }) => (
@@ -212,13 +212,13 @@ export default function UsersPage() {
 
   // ── RENDER ──
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-8 bg-gray-50 dark:bg-gray-950 min-h-screen">
 
       {/* ── HEADER ── */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Xodimlar</h1>
-          <p className="text-gray-500 mt-1">Barcha xodimlarni boshqarish</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Xodimlar</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Barcha xodimlarni boshqarish</p>
         </div>
         {hasPermission('User_Create') && (
           <button
@@ -292,42 +292,42 @@ export default function UsersPage() {
 
       /* ── TABLE ── */
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
+              <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <tr>
                   {['#', 'ISM', 'USERNAME', 'ROL', 'STATUS', 'HARAKATLAR'].map((col) => (
                     <th
                       key={col}
-                      className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+                      className="px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider"
                     >
                       {col}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
                 {filtered.map((user, idx) => (
-                  <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
 
                     {/* Index */}
-                    <td className="px-6 py-4 text-sm text-gray-400 font-medium w-12">
+                    <td className="px-6 py-4 text-sm text-gray-400 dark:text-gray-500 font-medium w-12">
                       {idx + 1}
                     </td>
 
                     {/* Ism */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
-                          <User size={16} className="text-orange-600" />
+                        <div className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                          <User size={16} className="text-orange-600 dark:text-orange-400" />
                         </div>
-                        <span className="text-sm font-semibold text-gray-900">{user.name}</span>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{user.name}</span>
                       </div>
                     </td>
 
                     {/* Username */}
-                    <td className="px-6 py-4 text-sm text-gray-500 font-mono">
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 font-mono">
                       @{user.username}
                     </td>
 
@@ -358,7 +358,7 @@ export default function UsersPage() {
                         {hasPermission('User_Update') && (
                           <button
                             onClick={() => openEditModal(user)}
-                            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                             title="Tahrirlash"
                           >
                             <Edit2 size={16} />
@@ -367,7 +367,7 @@ export default function UsersPage() {
                         {hasPermission('User_Delete') && (
                           <button
                             onClick={() => handleDelete(user)}
-                            className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                             title="O'chirish"
                             disabled={deleteMutation.isPending}
                           >
@@ -383,8 +383,8 @@ export default function UsersPage() {
           </div>
 
           {/* Table footer */}
-          <div className="px-6 py-3 bg-gray-50 border-t border-gray-100 text-sm text-gray-500">
-            Jami: <span className="font-semibold text-gray-700">{users.length}</span> ta xodim
+          <div className="px-6 py-3 bg-gray-50 dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400">
+            Jami: <span className="font-semibold text-gray-700 dark:text-gray-200">{users.length}</span> ta xodim
           </div>
         </div>
       )}
@@ -392,23 +392,23 @@ export default function UsersPage() {
       {/* ── MODAL ── */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl flex flex-col">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-md shadow-2xl flex flex-col">
 
             {/* Modal header */}
-            <div className="p-6 border-b flex justify-between items-center">
+            <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
-                  <Shield size={20} className="text-orange-600" />
+                <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center">
+                  <Shield size={20} className="text-orange-600 dark:text-orange-400" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-800">
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white">
                   {editingUser ? 'Xodimni tahrirlash' : 'Yangi xodim qo\'shish'}
                 </h2>
               </div>
               <button
                 onClick={closeModal}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
               >
-                <X size={22} className="text-gray-500" />
+                <X size={22} className="text-gray-500 dark:text-gray-400" />
               </button>
             </div>
 
@@ -417,7 +417,7 @@ export default function UsersPage() {
 
               {/* Ism */}
               <div>
-                <label className="block text-sm font-bold mb-1.5 text-gray-700">
+                <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                   Ism <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -426,7 +426,7 @@ export default function UsersPage() {
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="Ism familiya"
-                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-400 outline-none transition"
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-orange-400 outline-none transition"
                   required
                 />
               </div>
@@ -435,7 +435,7 @@ export default function UsersPage() {
               {!editingUser && (
                 <>
                   <div>
-                    <label className="block text-sm font-bold mb-1.5 text-gray-700">
+                    <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                       Username <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -445,13 +445,13 @@ export default function UsersPage() {
                       onChange={handleChange}
                       placeholder="johndoe"
                       autoComplete="off"
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-400 outline-none transition"
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-orange-400 outline-none transition"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold mb-1.5 text-gray-700">
+                    <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                       Parol <span className="text-red-500">*</span>
                       <span className="ml-1 text-xs font-normal text-gray-400">(kamida 6 belgi)</span>
                     </label>
@@ -462,7 +462,7 @@ export default function UsersPage() {
                       onChange={handleChange}
                       placeholder="••••••••"
                       autoComplete="new-password"
-                      className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-400 outline-none transition"
+                      className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-orange-400 outline-none transition"
                       required
                       minLength={6}
                     />
@@ -472,14 +472,14 @@ export default function UsersPage() {
 
               {/* Rol */}
               <div>
-                <label className="block text-sm font-bold mb-1.5 text-gray-700">
+                <label className="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
                   Rol <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className="w-full p-3 border border-gray-300 rounded-xl bg-white focus:ring-2 focus:ring-orange-400 outline-none transition"
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-400 outline-none transition"
                 >
                   <option value={UserRole.Admin}>Admin</option>
                   <option value={UserRole.Waiter}>Ofitsant</option>
@@ -489,7 +489,7 @@ export default function UsersPage() {
 
               {/* Status — faqat EDIT rejimida */}
               {editingUser && (
-                <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                   <input
                     type="checkbox"
                     name="isActive"
@@ -498,7 +498,7 @@ export default function UsersPage() {
                     className="w-5 h-5 accent-orange-500 cursor-pointer"
                   />
                   <div>
-                    <p className="text-sm font-semibold text-gray-700">Faol xodim</p>
+                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">Faol xodim</p>
                     <p className="text-xs text-gray-400">Tizimga kirish huquqi</p>
                   </div>
                 </label>
@@ -506,18 +506,18 @@ export default function UsersPage() {
 
               {/* Edit rejimida username ko'rsatish (o'zgartirib bo'lmaydi) */}
               {editingUser && (
-                <div className="p-3 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-dashed border-gray-200 dark:border-gray-600">
                   <p className="text-xs text-gray-400 mb-0.5">Username (o'zgartirilmaydi)</p>
-                  <p className="text-sm font-mono text-gray-600">@{editingUser.username}</p>
+                  <p className="text-sm font-mono text-gray-600 dark:text-gray-300">@{editingUser.username}</p>
                 </div>
               )}
 
               {/* Footer buttons */}
-              <div className="flex gap-3 pt-2 border-t">
+              <div className="flex gap-3 pt-2 border-t dark:border-gray-700">
                 <button
                   type="button"
                   onClick={closeModal}
-                  className="flex-1 px-5 py-2.5 bg-gray-100 rounded-xl font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-5 py-2.5 bg-gray-100 dark:bg-gray-800 rounded-xl font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                 >
                   Bekor qilish
                 </button>

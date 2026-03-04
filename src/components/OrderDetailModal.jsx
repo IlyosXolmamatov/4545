@@ -278,12 +278,12 @@ const OrderDetailModal = ({ orderId, onClose }) => {
                   {order.items?.map(item => (
                     <div key={item.id} className="flex items-center gap-3 py-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold">{item.productName ?? 'Mahsulot'}</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.productName ?? 'Mahsulot'}</p>
                         <p className="text-xs text-gray-400">
                           {item.priceAtTime?.toLocaleString()} so'm × {item.count}
                         </p>
                       </div>
-                      <p className="text-sm font-bold w-28 text-right">
+                      <p className="text-sm font-bold w-28 text-right text-gray-900 dark:text-white">
                         {((item.priceAtTime ?? 0) * item.count).toLocaleString()} so'm
                       </p>
                       {!isLocked && (
@@ -300,7 +300,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
                                 : <Minus size={12} />}
                             </button>
                           )}
-                          <span className="w-6 text-center text-sm font-bold">{item.count}</span>
+                          <span className="w-6 text-center text-sm font-bold text-gray-900 dark:text-white">{item.count}</span>
                           {hasPermission('Order_ItemIncrease') && (
                             <button
                               onClick={() => increaseItemMutation.mutate({ productId: item.productId, count: 1 })}
@@ -336,8 +336,8 @@ const OrderDetailModal = ({ orderId, onClose }) => {
 
               {/* TOTAL */}
               <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex justify-between items-center">
-                <span className="text-base font-bold">Jami:</span>
-                <span className="text-2xl font-bold">{order.totalAmount?.toLocaleString()} so'm</span>
+                <span className="text-base font-bold text-gray-900 dark:text-white">Jami:</span>
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">{order.totalAmount?.toLocaleString()} so'm</span>
               </div>
             </div>
 

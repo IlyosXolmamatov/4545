@@ -369,20 +369,20 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all">
+            <div key={stat.label} className="bg-white dark:bg-gray-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{stat.label}</p>
-                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">{stat.label}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                     {stat.loading ? '—' : stat.value}
                   </p>
                 </div>
-                <div className={`w-14 h-14 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}>
-                  <Icon className="w-7 h-7 text-white" />
+                <div className={`w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center shrink-0`}>
+                  <Icon className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                 </div>
               </div>
             </div>

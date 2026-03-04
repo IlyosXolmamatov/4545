@@ -234,7 +234,6 @@ const TablesPage = () => {
       closeModal();
     },
     onError: (err) => {
-      console.error('Update error:', err.response?.data || err.message);
       const data = err.response?.data;
       const msg = (typeof data === 'string' ? data : null)
                 || data?.message

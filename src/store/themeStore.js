@@ -11,9 +11,8 @@ const applyTheme = (isDark) => {
 export const useThemeStore = create((set) => {
   // localStorage → yo'q bo'lsa tizim preferenceni tekshir
   const saved = localStorage.getItem('theme');
-  const initial = saved
-    ? saved === 'dark'
-    : window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
+  // Default: light mode (POS terminali uchun qulay)
+  const initial = saved ? saved === 'dark' : false;
   applyTheme(initial);
 
   return {

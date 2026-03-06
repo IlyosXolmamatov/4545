@@ -36,6 +36,8 @@ const OrderDetailModal = ({ orderId, onClose }) => {
   const [changeTableMode, setChangeTableMode] = useState(false);
   const [newTableId, setNewTableId] = useState(null);
   const [dlg, setDlg] = useState(null);
+  const [decreaseDialog, setDecreaseDialog] = useState(null); // { productId, productName }
+  const [decreaseReason, setDecreaseReason] = useState('');
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', orderId],
@@ -89,9 +91,9 @@ const OrderDetailModal = ({ orderId, onClose }) => {
   });
 
   const decreaseItemMutation = useMutation({
-    mutationFn: ({ productId, count }) => {
+    mutationFn: ({ productId, count, aboutOfCancelled = '' }) => {
       setPendingDecrease(productId);
-      return orderAPI.decreaseItem(orderId, productId, count, 'Kamaytirish');
+      return orderAPI.decreaseItem(orderId, productId, count, aboutOfCancelled);
     },
     onMutate: async ({ productId, count }) => {
       await queryClient.cancelQueries({ queryKey: ['order', orderId] });
@@ -290,7 +292,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
                         <div className="flex items-center gap-1">
                           {hasPermission('Order_ItemDecrease') && (
                             <button
-                              onClick={() => decreaseItemMutation.mutate({ productId: item.productId, count: 1 })}
+                              onClick={() => { setDecreaseReason(''); setDecreaseDialog({ productId: item.productId, productName: item.productName }); }}
                               disabled={pendingDecrease === item.productId || pendingIncrease === item.productId}
                               className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-red-100 hover:text-red-600 disabled:opacity-40"
                               title="Miqdorni kamaytirish"
@@ -360,6 +362,52 @@ const OrderDetailModal = ({ orderId, onClose }) => {
           </>
         )}
       </div>
+
+      {/* Decrease reason dialog */}
+      {decreaseDialog && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <h3 className="font-bold text-gray-900 dark:text-white mb-1">Kamaytirish sababi</h3>
+            <p className="text-xs text-gray-400 mb-3">"{decreaseDialog.productName}"</p>
+            <input
+              type="text"
+              autoFocus
+              value={decreaseReason}
+              onChange={e => setDecreaseReason(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && decreaseReason.trim()) {
+                  decreaseItemMutation.mutate({ productId: decreaseDialog.productId, count: 1, aboutOfCancelled: decreaseReason.trim() });
+                  setDecreaseDialog(null);
+                }
+              }}
+              placeholder="Sabab kiriting..."
+              className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700
+                         bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white
+                         focus:outline-none focus:border-orange-400 mb-4"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDecreaseDialog(null)}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700
+                           text-gray-600 dark:text-gray-400 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                Bekor
+              </button>
+              <button
+                disabled={!decreaseReason.trim()}
+                onClick={() => {
+                  decreaseItemMutation.mutate({ productId: decreaseDialog.productId, count: 1, aboutOfCancelled: decreaseReason.trim() });
+                  setDecreaseDialog(null);
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600
+                           text-white text-sm font-semibold disabled:opacity-50 transition-colors"
+              >
+                Tasdiqlash
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmModal
         open={!!dlg}

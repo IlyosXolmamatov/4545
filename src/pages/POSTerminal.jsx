@@ -6,7 +6,7 @@ import {
   ShoppingCart, Plus, Minus, Trash2,
   Loader2, Package, UtensilsCrossed, ShoppingBag,
   ArrowLeft, Search, X, ClipboardList, ChevronRight,
-  MapPin, Crown, Users, Clock, Printer,
+  MapPin, Crown, Users, Clock, Percent,
 } from 'lucide-react';
 
 import { orderAPI, OrderType } from '../api/orders';
@@ -34,45 +34,12 @@ const getUserName = (u) => {
   );
 };
 
-const sendToPrinter = (url, payload) => {
-  fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
-    .then(async (res) => {
-      await res.text();
-    })
-    .catch(() => {});
-};
-
-// terminalTag string yoki number bo'lishi mumkin → normalizatsiya
 const TERMINAL_TAG_STR = { Oshxona: 1, Somsaxona: 2, Kassa: 3, Bar: 4, Extra: 5 };
 const resolveTag = (tag) => typeof tag === 'number' ? tag : (TERMINAL_TAG_STR[tag] ?? 1);
 
-const autoPrint = (cartItems, sku, tableNumber, waiterName) => {
- 
-  const kitchenItems = cartItems.filter(i => resolveTag(i.terminalTag) === 1);
-  const somsaItems   = cartItems.filter(i => resolveTag(i.terminalTag) === 2);
-
-  if (kitchenItems.length > 0) {
-    sendToPrinter('/printer/print-kitchen', {
-      orderSku: String(sku ?? ''),
-      tableNumber: tableNumber ?? 0,
-      waiterName: waiterName ?? '',
-      totalAmount: kitchenItems.reduce((s, i) => s + i.price * i.count, 0),
-      items: kitchenItems.map(i => ({ name: i.name, quantity: i.count, price: i.price })),
-    });
-  }
-  if (somsaItems.length > 0) {
-    sendToPrinter('/printer/print-somsa', {
-      orderSku: String(sku ?? ''),
-      tableNumber: tableNumber ?? 0,
-      waiterName: waiterName ?? '',
-      totalAmount: somsaItems.reduce((s, i) => s + i.price * i.count, 0),
-      items: somsaItems.map(i => ({ name: i.name, quantity: i.count, price: i.price })),
-    });
-  }
+const autoPrint = (orderId) => {
+  if (!orderId) return;
+  orderAPI.printCashier(orderId).catch(() => {});
 };
 
 const fmtTime = (d) => {
@@ -110,17 +77,25 @@ const TABLE_STATUS_CFG = {
 
 // ─── TABLE CARD ───────────────────────────────────────────────────────────────
 
-const TableCard = ({ table, onClick }) => {
-  const cfg = TABLE_STATUS_CFG[table.tableStatus] ?? TABLE_STATUS_CFG[TableStatus.Free];
+const TableCard = ({ table, onClick, hasActiveOrder = false }) => {
+  // Agar table statusi Empty bo'lsayam, aktiv order bo'lsa Band ko'rsatamiz
+  const effectiveStatus = hasActiveOrder && (table.tableStatus === TableStatus.Free || table.tableStatus === 1)
+    ? TableStatus.Occupied
+    : table.tableStatus;
+  const cfg = TABLE_STATUS_CFG[effectiveStatus] ?? TABLE_STATUS_CFG[TableStatus.Free];
   const typeLabel = table.tableType === TableType.Simple ? 'Ichkari'
     : table.tableType === TableType.Terrace ? 'Terasa' : 'VIP';
+  const isFree = !hasActiveOrder && (table.tableStatus === TableStatus.Free || table.tableStatus === 1);
 
   return (
     <button
       onClick={onClick}
       className={`relative aspect-square rounded-2xl border-2 p-2 sm:p-3 flex flex-col items-center justify-center gap-1
-                  transition-all duration-150 hover:shadow-md hover:-translate-y-0.5 active:scale-95
-                  bg-white dark:bg-gray-900 ${cfg.border}`}
+                  transition-all duration-150 ${cfg.border}
+                  ${isFree
+                    ? 'bg-white dark:bg-gray-900 hover:shadow-md hover:-translate-y-0.5 active:scale-95 cursor-pointer'
+                    : 'bg-rose-50 dark:bg-rose-950/40 cursor-pointer'
+                  }`}
     >
       <span className="absolute top-1.5 right-1.5 text-[8px] font-bold px-1 py-0.5 rounded
                        bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 uppercase tracking-wide">
@@ -256,6 +231,7 @@ const POSTerminal = () => {
   const [cart, setCart]                         = useState([]);
   const [selectedTableId, setSelectedTableId]   = useState(null);
   const [orderType, setOrderType]               = useState(OrderType.DineIn);
+  const [serviceCharge, setServiceCharge]       = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   // URL dan orderId (OrdersPage → POS)
@@ -276,14 +252,29 @@ const POSTerminal = () => {
   // ── Queries ──
   const { data: products = [],  isLoading: pLoading }     = useQuery({ queryKey: ['products'],   queryFn: productAPI.getAll });
   const { data: categories = [] }                          = useQuery({ queryKey: ['categories'], queryFn: categoryAPI.getAll });
-  const { data: tables = [],    isLoading: tablesLoading } = useQuery({ queryKey: ['tables'], queryFn: tableAPI.getAll, select: (d) => Array.isArray(d) ? d.map(normalizeTable) : [], refetchInterval: 15_000 });
+  const { data: tables = [],    isLoading: tablesLoading } = useQuery({ queryKey: ['tables'], queryFn: tableAPI.getAll, select: (d) => Array.isArray(d) ? d.map(normalizeTable) : [], staleTime: 10_000, refetchInterval: 60_000, refetchOnMount: true });
 
+  // Polling yo'q — useOrderHub (AppLayout) SignalR orqali invalidate qiladi.
+  // 60s stale fallback (SignalR ulanmagan holat uchun).
   const { data: activeOrders = [] } = useQuery({
     queryKey: waiter ? ['orders', 'my-active'] : ['orders'],
     queryFn:  waiter ? orderAPI.getMyActive : orderAPI.getAll,
-    refetchInterval: 15_000,
+    staleTime: 10_000,
+    refetchInterval: 60_000,
   });
   const visibleActiveOrders = activeOrders.filter(o => o.orderStatus === 1);
+
+  // Stol bloklash uchun BARCHA aktiv orderlar — ruxsat bo'lmasa bo'sh qaytadi
+  const { data: allOrdersRaw = [] } = useQuery({
+    queryKey: ['orders', 'all-for-blocking'],
+    queryFn: async () => {
+      try { return await orderAPI.getAll(); }
+      catch { return []; }
+    },
+    staleTime: 10_000,
+    refetchInterval: 60_000,
+  });
+  const allActiveOrders = allOrdersRaw.filter(o => o.orderStatus === 1);
 
   // addMode uchun: mavjud orderni yuklash
   const { data: editingOrder, isLoading: editingLoading } = useQuery({
@@ -322,13 +313,29 @@ const POSTerminal = () => {
       }
       throw lastErr;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       if (printQueueRef.current) {
-        const { cart: savedCart, tableNumber } = printQueueRef.current;
-        const sku = data?.sku ?? data?.orderSku ?? '';
-        autoPrint(savedCart, sku, tableNumber, getUserName(user));
+        autoPrint(data?.id ?? data?.Id);
         printQueueRef.current = null;
       }
+
+      // Stol statusini Band (NotEmpty=2) qilib yangilash.
+      // Backend order yaratganda tableStatus ni avtomatik o'zgartirmaydi —
+      // shuning uchun biz PATCH /Table/UpdateStatus/{id} ni chaqiramiz.
+      if (variables.tableId) {
+        // 1. Optimistic update — boshqa foydalanuvchilar uchun SignalR event kelgunicha
+        //    cache'ni darhol yangilaymiz (UI'da stol "Band" ko'rinadi)
+        queryClient.setQueryData(['tables'], (old) =>
+          Array.isArray(old)
+            ? old.map(t =>
+                t.id === variables.tableId
+                  ? { ...t, tableStatus: TableStatus.NotEmpty }
+                  : t
+              )
+            : old
+        );
+      }
+
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['orders', 'my-active'] });
       queryClient.invalidateQueries({ queryKey: ['tables'] });
@@ -378,8 +385,7 @@ const POSTerminal = () => {
     },
     onSuccess: () => {
       if (printQueueRef.current) {
-        const { cart: savedCart, tableNumber, sku } = printQueueRef.current;
-        autoPrint(savedCart, sku, tableNumber, getUserName(user));
+        autoPrint(editingOrderId);
         printQueueRef.current = null;
       }
       queryClient.invalidateQueries({ queryKey: ['order', editingOrderId] });
@@ -408,13 +414,45 @@ const POSTerminal = () => {
     },
   });
 
+  // 3. Vositachilik haqqini o'zgartirish (admin/kassa, addMode)
+  const serviceChargeMutation = useMutation({
+    mutationFn: ({ orderId, value }) => orderAPI.changeServiceCharge(orderId, value),
+    onMutate: ({ orderId, value }) => {
+      // Optimistic: UI ni darhol yangilaymiz
+      queryClient.setQueryData(['order', orderId], (old) =>
+        old ? { ...old, serviceCharge: value } : old
+      );
+    },
+    onSuccess: (_, { orderId }) => {
+      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onError: (err, { orderId, value }) => {
+      // Rollback
+      queryClient.setQueryData(['order', orderId], (old) =>
+        old ? { ...old, serviceCharge: !value } : old
+      );
+      const msg = err?.response?.data?.message || err?.response?.data || "Xatolik";
+      toast.error(typeof msg === 'string' ? msg : "Xizmat haqqini o'zgartirish mum'kin emas");
+    },
+  });
+
   // ── Cart helpers ──
-  const addToCart = (product) =>
+  const addToCart = (product) => {
+    // Admin / kassa addMode da: orderdagi mavjud mahsulotni qo'shib bo'lmaydi
+    if (!waiter && addMode) {
+      const alreadyInOrder = editingOrder?.items?.some(i => i.productId === product.id);
+      if (alreadyInOrder) {
+        toast.error(`"${product.name}" mahsuloti buyurtmada band`);
+        return;
+      }
+    }
     setCart(prev => {
       const ex = prev.find(i => i.productId === product.id);
       if (ex) return prev.map(i => i.productId === product.id ? { ...i, count: i.count + 1 } : i);
       return [...prev, { productId: product.id, name: product.name, price: product.price, count: 1, terminalTag: resolveTag(product.terminalTag ?? 1) }];
     });
+  };
 
   const increaseCart = (pid) =>
     setCart(prev => prev.map(i => i.productId === pid ? { ...i, count: i.count + 1 } : i));
@@ -433,6 +471,7 @@ const POSTerminal = () => {
     setCart([]);
     setSelectedTableId(null);
     setOrderType(OrderType.DineIn);
+    setServiceCharge(true);
     setSelectedCategory(null);
     setEditingOrderId(null);
     setAddMode(false);
@@ -469,6 +508,15 @@ const POSTerminal = () => {
       toast.error("Stol tanlang"); return;
     }
 
+    // Yakuniy blok: stol hali ham band emasligini tekshir (race condition)
+    if (orderType === OrderType.DineIn && selectedTableId) {
+      const activeForTable = allActiveOrders.find(o => o.tableNumber === selectedTable?.tableNumber);
+      if (activeForTable) {
+        toast.error(`Stol #${selectedTable?.tableNumber} allaqachon band!`);
+        return;
+      }
+    }
+
     const userId = getUserId(user);
     if (!userId) { toast.error("Foydalanuvchi ma'lumotlari topilmadi"); return; }
 
@@ -480,64 +528,41 @@ const POSTerminal = () => {
     createMutation.mutate({
       userId,
       ...(orderType === OrderType.DineIn && selectedTableId ? { tableId: selectedTableId } : {}),
-      orderType,
+      orderType: orderType === OrderType.DineIn ? 'DineIn' : 'TakeOut',
+      serviceCharge,
       items: cart.map(i => ({ productId: i.productId, count: i.count })),
     });
   };
 
-  const handleKassaPrint = () => {
-    let allItems = [];
-    let sku = '';
-    let tableNum = 0;
-
-    if (addMode && editingOrder) {
-      allItems = [
-        ...(editingOrder.items || []).map(i => ({ name: i.productName, count: i.count, price: i.priceAtTime ?? 0 })),
-        ...cart.map(i => ({ name: i.name, count: i.count, price: i.price })),
-      ];
-      sku = editingOrder.sku ?? '';
-      tableNum = editingOrder.tableNumber ?? 0;
-    } else {
-      allItems = cart.map(i => ({ name: i.name, count: i.count, price: i.price }));
-      tableNum = selectedTable?.tableNumber ?? 0;
-    }
-
-    const subtotal = allItems.reduce((s, i) => s + i.price * i.count, 0);
-    const serviceCharge = Math.round(subtotal * 0.15);
-    const grandTotal = subtotal + serviceCharge;
-
-    sendToPrinter('/printer/print', {
-      orderSku: String(sku),
-      tableNumber: tableNum,
-      waiterName: getUserName(user),
-      totalAmount: grandTotal,
-      items: allItems.map(i => ({ name: i.name, quantity: i.count, price: i.price })),
-    });
-  };
 
   // ── Navigation ──
   const handleSelectTable = (table) => {
     setSelectedTableId(table.id);
     setOrderType(OrderType.DineIn);
 
-    // Band stol → mavjud orderga qo'shish
-    if (table.tableStatus === TableStatus.Occupied || table.tableStatus === 2) {
-      const existing = visibleActiveOrders.find(o => o.tableNumber === table.tableNumber);
-      if (existing) {
-        setEditingOrderId(existing.id);
+    // Stol band: tableStatus bo'yicha YOKI istalgan foydalanuvchining aktiv orderi mavjud
+    const statusBusy    = table.tableStatus !== TableStatus.Empty && table.tableStatus !== 1;
+    const existingOrder = allActiveOrders.find(o => o.tableNumber === table.tableNumber);
+
+    if (statusBusy || existingOrder) {
+      if (existingOrder) {
+        if (!waiter) {
+          // Admin / kassa: stol buyurtmada band — kirish yo'q
+          toast.error(`Stol #${table.tableNumber} buyurtmada band`);
+          return;
+        }
+        // Ofitsant: mavjud orderni tahrirlash rejiimga o'tish
+        setEditingOrderId(existingOrder.id);
         setAddMode(true);
         setCart([]);
         setStep('menu');
-        return;
+      } else {
+        toast.error(`Stol #${table.tableNumber} band`);
       }
-      // Order topilmadi (boshqa ofitsantniki yoki stale data)
-      if (waiter) {
-        toast.error("Bu stol sizga tegishli emas");
-        return;
-      }
+      return;
     }
 
-    // Bo'sh stol yoki band lekin order topilmadi (admin/kassa yangi order yaratadi)
+    // Bo'sh stol — yangi order
     setEditingOrderId(null);
     setAddMode(false);
     setCart([]);
@@ -593,6 +618,12 @@ const POSTerminal = () => {
   );
 
   const selectedTable = tables.find(t => t.id === selectedTableId);
+
+  // Aktiv buyurtma (status=1) bo'lgan stollarning raqamlari → blok uchun (barcha userlar uchun)
+  const busyTableNumbers = useMemo(
+    () => new Set(allActiveOrders.map(o => o.tableNumber)),
+    [allActiveOrders]
+  );
   const cartCount     = cart.reduce((s, i) => s + i.count, 0);
   const isPending     = addMode ? addToExistingMutation.isPending : createMutation.isPending;
 
@@ -659,6 +690,7 @@ const POSTerminal = () => {
               </>
             )}
           </div>
+
 
           {/* Faol buyurtmalar tugmasi */}
           <button
@@ -756,14 +788,14 @@ const POSTerminal = () => {
                   <div key={type}>
                     <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">{lbl}</p>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-                      {group.map(t => <TableCard key={t.id} table={t} onClick={() => handleSelectTable(t)} />)}
+                      {group.map(t => <TableCard key={t.id} table={t} onClick={() => handleSelectTable(t)} hasActiveOrder={busyTableNumbers.has(t.tableNumber)} />)}
                     </div>
                   </div>
                 );
               })
             ) : (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-                {filteredTables.map(t => <TableCard key={t.id} table={t} onClick={() => handleSelectTable(t)} />)}
+                {filteredTables.map(t => <TableCard key={t.id} table={t} onClick={() => handleSelectTable(t)} hasActiveOrder={busyTableNumbers.has(t.tableNumber)} />)}
               </div>
             )}
           </div>
@@ -1043,12 +1075,60 @@ const POSTerminal = () => {
               </div>
             </div>
           ) : (
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Jami:</span>
-              <span className="text-2xl font-black text-gray-900 dark:text-white">
-                {totalAmount.toLocaleString()} so'm
-              </span>
+            <div className="mb-4">
+              {serviceCharge && (
+                <div className="flex justify-between text-xs mb-1">
+                  <span className="text-gray-400 dark:text-gray-500">Xizmat haqqi (15%):</span>
+                  <span className="text-rose-500 font-semibold">
+                    +{Math.round(totalAmount * 0.15).toLocaleString()} so'm
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Jami:</span>
+                <span className="text-2xl font-black text-gray-900 dark:text-white">
+                  {serviceCharge
+                    ? Math.round(totalAmount * 1.15).toLocaleString()
+                    : totalAmount.toLocaleString()} so'm
+                </span>
+              </div>
             </div>
+          )}
+
+          {/* Xizmat haqqi toggle */}
+          {!waiter && !addMode && (
+            // Yangi order uchun: lokal state
+            <button
+              onClick={() => setServiceCharge(p => !p)}
+              className={`w-full mb-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-colors ${
+                serviceCharge
+                  ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400'
+                  : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              <Percent size={12} />
+              {serviceCharge ? "Xizmat haqqi: 15% (o'chirish)" : "Xizmat haqqi: yo'q (yoqish)"}
+            </button>
+          )}
+          {!waiter && addMode && editingOrder && (
+            // Mavjud order uchun: backend ga PATCH
+            <button
+              disabled={serviceChargeMutation.isPending}
+              onClick={() => serviceChargeMutation.mutate({
+                orderId: editingOrderId,
+                value: !(editingOrder.serviceCharge ?? true),
+              })}
+              className={`w-full mb-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-colors disabled:opacity-50 ${
+                (editingOrder.serviceCharge ?? true)
+                  ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400'
+                  : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              <Percent size={12} />
+              {(editingOrder.serviceCharge ?? true)
+                ? "Xizmat haqqi: 15% (o'chirish)"
+                : "Xizmat haqqi: yo'q (yoqish)"}
+            </button>
           )}
 
           <div className="flex gap-2">
@@ -1059,15 +1139,6 @@ const POSTerminal = () => {
             >
               Bekor
             </button>
-            {!waiter && (cart.length > 0 || (addMode && editingOrder)) && (
-              <button
-                onClick={handleKassaPrint}
-                className="px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold
-                           text-sm transition-colors flex items-center gap-1.5 shadow-lg shadow-blue-200 dark:shadow-blue-900/30"
-              >
-                <Printer size={15} /> Chek
-              </button>
-            )}
             <button
               onClick={handleSubmit}
               disabled={isPending || (addMode && cart.length === 0)}

@@ -3,10 +3,14 @@ import { Outlet, Navigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import Sidebar from './Sidebar';
+import { useTableHub } from '../../hooks/useTableHub';
+import { useOrderHub } from '../../hooks/useOrderHub';
 
 const AppLayout = () => {
   const { user, isLoading } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  useTableHub();
+  useOrderHub();
 
   if (isLoading) {
     return (
@@ -49,7 +53,7 @@ const AppLayout = () => {
           >
             <Menu size={22} />
           </button>
-          <img src="/logo.jpg" alt="Basand" className="w-7 h-7 rounded-lg object-cover" />
+          <img src="/logo.png" alt="Basand" className="w-7 h-7 rounded-lg object-cover" />
           <h1 className="text-lg font-bold text-orange-500">Basand</h1>
         </header>
 

@@ -2,10 +2,7 @@ import axiosClient from './axios';
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
-/**
- * Backend relative imageUrl ni to'liq URL ga aylantiradi
- * Masalan: "/uploads/abc.jpg" → "http://45.130.148.187:5781/uploads/abc.jpg"
- */
+
 export const getImgUrl = (url) => {
   if (!url) return null;
   if (url.startsWith('http')) return url;
@@ -17,16 +14,14 @@ export const TerminalTag = {
   Oshxona: 1,
   Somsaxona: 2,
   Kassa: 3,
-  Bar: 4,
-  Extra: 5
+  // Bar: 4,
+  // Extra: 5
 };
 
 export const productAPI = {
   // [HttpGet] GetAllProductsAsync
   getAll: async () => {
     const response = await axiosClient.get('/Product/GetAllProducts');
-
-
     return response.data;
   },
 

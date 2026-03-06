@@ -127,7 +127,7 @@ function CashierView({ user }) {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Kassir Paneli</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">Xush kelibsiz, {user?.name}!</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Xush kelibsiz, {user?.name}! Bu sizning hisobingiz login va parollarni xavfsiz saqlang!!!</p>
         </div>
         <PeriodFilter filter={filter} onChange={setFilter} />
       </div>
@@ -354,10 +354,10 @@ export default function AdminDashboard() {
   const { data: categories = [], isLoading: categoriesLoading } = useQuery({ queryKey: ['categories'], queryFn: categoryAPI.getAll });
 
   const stats = [
-    { label: 'Xodimlar',      value: users.length,      icon: Users,           color: 'from-blue-500 to-blue-600',   loading: usersLoading },
-    { label: 'Mahsulotlar',   value: products.length,   icon: UtensilsCrossed, color: 'from-orange-500 to-amber-600',loading: productsLoading },
-    { label: 'Stollar',       value: tables.length,     icon: Table2,          color: 'from-green-500 to-green-600', loading: tablesLoading },
-    { label: 'Kategoriyalar', value: categories.length, icon: Grid3x3,         color: 'from-purple-500 to-purple-600',loading: categoriesLoading },
+    { label: 'Xodim',      value: users.length,      icon: Users,           color: 'from-blue-500 to-blue-600',   loading: usersLoading },
+    { label: 'Mahsulot',   value: products.length,   icon: UtensilsCrossed, color: 'from-orange-500 to-amber-600',loading: productsLoading },
+    { label: 'Stoll',       value: tables.length,     icon: Table2,          color: 'from-green-500 to-green-600', loading: tablesLoading },
+    { label: 'Kategoriya', value: categories.length, icon: Grid3x3,         color: 'from-purple-500 to-purple-600',loading: categoriesLoading },
   ];
 
   return (
@@ -373,8 +373,8 @@ export default function AdminDashboard() {
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="bg-white dark:bg-gray-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all">
-              <div className="flex items-center justify-between">
+            <div key={stat.label} className="bg-white dark:bg-gray-900 rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 dark:border-gray-100 hover:shadow-md transition-all">
+             <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">{stat.label}</p>
                   <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">

@@ -62,7 +62,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       {/* ── Logo ── */}
       <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <img src="/logo.jpg" alt="Basand" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+          <img src="/logo.png" alt="Basand" className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
           <div>
             <h1 className="text-xl font-bold text-orange-500 leading-tight">Basand</h1>
             <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wide">

@@ -1,19 +1,19 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import {
   Eye, Search, ShoppingBag, Plus, Pencil,
   Clock, CheckCircle, XCircle, Wallet,
-  UtensilsCrossed, Printer,
+  UtensilsCrossed, Printer, CalendarDays,
 } from 'lucide-react';
-
-const COMMISSION_RATE = 0.15;
 
 import {
   orderAPI,
   OrderStatus,
   ORDER_TYPE_LABELS,
 } from '../api/orders';
+import { TableStatus } from '../api/tables';
 import { useAuthStore } from '../store/authStore';
 import OrderViewModal from '../components/OrderViewModal';
 import OrderDetailModal from '../components/OrderDetailModal';
@@ -49,7 +49,7 @@ const formatTime = (d) => {
 
 // ─── ORDER CARD ───────────────────────────────────────────────────────────────
 
-function OrderCard({ order, onView, onEdit, canEdit, canPrint }) {
+function OrderCard({ order, onView, onEdit, onFinish, canEdit, canPrint, canFinish }) {
   const meta   = STATUS_META[order.orderStatus] ?? STATUS_META[0];
   const Icon   = meta.Icon;
   const items  = order.items ?? [];
@@ -66,7 +66,7 @@ function OrderCard({ order, onView, onEdit, canEdit, canPrint }) {
           <p className="text-base font-black text-gray-900 dark:text-white tracking-tight">
             #{order.sku}
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+          <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
             {order.orderType === 2
               ? <span className="flex items-center gap-1"><UtensilsCrossed size={11} /> Olib ketish</span>
               : order.tableNumber
@@ -117,7 +117,7 @@ function OrderCard({ order, onView, onEdit, canEdit, canPrint }) {
 
       {/* ── FOOTER: TIME + WAITER ── */}
       <div className="mx-4 border-t border-gray-100 dark:border-gray-800" />
-      <div className="flex items-center justify-between px-4 py-2 text-xs text-gray-400 dark:text-gray-500">
+      <div className="flex items-center justify-between px-4 py-2 text-xs text-gray-400 dark:text-gray-400">
         {time
           ? <span className="flex items-center gap-1"><Clock size={11} /> {time}</span>
           : <span />}
@@ -125,59 +125,61 @@ function OrderCard({ order, onView, onEdit, canEdit, canPrint }) {
       </div>
 
       {/* ── BUTTONS ── */}
-      <div className="flex gap-2 px-4 pb-4 pt-1">
-        <button
-          onClick={() => onView(order)}
-          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl
-                     border border-gray-200 dark:border-gray-700 text-sm font-medium
-                     text-gray-700 dark:text-gray-300
-                     hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-        >
-          <Eye size={14} />
-          Ko'rish
-        </button>
-
-        {canEdit && (
+      <div className="flex flex-col gap-1.5 px-4 pb-4 pt-1">
+        {/* Row 1: Ko'rish + Tahrirlash */}
+        <div className="flex gap-1.5">
           <button
-            onClick={() => onEdit(order.id)}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl
-                       bg-gray-900 dark:bg-white text-white dark:text-gray-900
-                       text-sm font-semibold
-                       hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors"
+            onClick={() => onView(order)}
+            className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl
+                       border border-gray-200 dark:border-gray-700 text-xs font-medium
+                       text-gray-700 dark:text-gray-300 min-w-0
+                       hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            <Pencil size={14} />
-            Tahrirlash
+            <Eye size={13} className="shrink-0" />
+            <span className="truncate">Ko'rish</span>
           </button>
-        )}
 
-        {canPrint && (
-          <button
-            onClick={() => {
-              const items = order.items || [];
-              const subtotal = items.reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0);
-              const serviceCharge = Math.round(subtotal * COMMISSION_RATE);
-              fetch('/printer/print', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  orderSku: order.sku ?? '',
-                  tableNumber: order.tableNumber ?? 0,
-                  waiterName: order.waiterName ?? '',
-                  totalAmount: subtotal + serviceCharge,
-                  items: items.map((i) => ({
-                    name: i.productName,
-                    quantity: i.count,
-                    price: i.priceAtTime ?? 0,
-                  })),
-                }),
-              }).catch(() => {});
-            }}
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl
-                       bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition-colors"
-          >
-            <Printer size={14} />
-            Print
-          </button>
+          {canEdit && (
+            <button
+              onClick={() => onEdit(order.id)}
+              className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl
+                         bg-gray-900 dark:bg-white text-white dark:text-gray-900
+                         text-xs font-semibold min-w-0
+                         hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors"
+            >
+              <Pencil size={13} className="shrink-0" />
+              <span className="truncate">Tahrir</span>
+            </button>
+          )}
+        </div>
+
+        {/* Row 2: Print + To'lov qabul qilish */}
+        {(canPrint || canFinish) && (
+          <div className="flex gap-1.5">
+            {canPrint && (
+              <button
+                onClick={() => orderAPI.printCashier(order.id).catch(() => {})}
+                className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl
+                           bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold
+                           min-w-0 transition-colors"
+              >
+                <Printer size={13} className="shrink-0" />
+                <span className="truncate">Print</span>
+              </button>
+            )}
+
+            {canFinish && (
+              <button
+                onClick={() => onFinish(order.id)}
+                className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl
+                           bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold
+                           min-w-0 transition-colors"
+              >
+                <Wallet size={13} className="shrink-0" />
+                <span className="truncate">To'lov</span>
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -188,40 +190,85 @@ function OrderCard({ order, onView, onEdit, canEdit, canPrint }) {
 
 export default function OrdersPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { isWaiter, hasPermission } = useAuthStore();
   const waiter = isWaiter();
 
   const [statusFilter,   setStatusFilter]   = useState('all');
+  const [dateFilter,     setDateFilter]     = useState('today');
   const [search,         setSearch]         = useState('');
   const [viewingOrder,   setViewingOrder]   = useState(null);
   const [editingOrderId, setEditingOrderId] = useState(null);
 
+  // Polling yo'q — useOrderHub (AppLayout) SignalR orqali invalidate qiladi.
+  // 60s stale fallback saqlanadi.
   const { data: orders = [], isLoading } = useQuery({
-    queryKey:             waiter ? ['orders', 'my-active'] : ['orders'],
-    queryFn:              waiter ? orderAPI.getMyActive : orderAPI.getAll,
-    refetchInterval:      15_000,
-    refetchIntervalInBackground: true,
+    queryKey:  waiter ? ['orders', 'my-active'] : ['orders'],
+    queryFn:   waiter ? orderAPI.getMyActive : orderAPI.getAll,
+    staleTime: 10_000,
+    refetchInterval: 60_000,
   });
 
-  const filtered = orders.filter((order) => {
-    const matchStatus =
-      statusFilter === 'all' || order.orderStatus === Number(statusFilter);
-    if (!search) return matchStatus;
-    const q = search.toLowerCase();
-    const match =
-      String(order.sku        ?? '').toLowerCase().includes(q) ||
-      String(order.waiterName ?? '').toLowerCase().includes(q) ||
-      String(order.tableNumber ?? '').toLowerCase().includes(q) ||
-      (order.items ?? []).map((it) => it.productName ?? '').join(' ').toLowerCase().includes(q);
-    return matchStatus && match;
-  });
+  const todayStr = new Date().toLocaleDateString('sv-SE'); // 'YYYY-MM-DD'
 
-  const total     = orders.length;
-  const preparing = orders.filter((o) => o.orderStatus === 1).length;
-  const cancelled = orders.filter((o) => o.orderStatus === 2).length;
-  const finished  = orders.filter((o) => o.orderStatus === 3).length;
+  // Faqat sana filtri — stat cardlar shu asosda hisoblanadi
+  const dateOrders = waiter || dateFilter === 'all'
+    ? orders
+    : orders.filter((o) => o.createdAt
+        ? new Date(o.createdAt).toLocaleDateString('sv-SE') === todayStr
+        : false);
+
+  // Tayyor (1) → To'landi (3) → Bekor (2) tartibida, bir xil status ichida yangirog'i oldin
+  const STATUS_ORDER = { 1: 0, 3: 1, 2: 2 };
+
+  const filtered = dateOrders
+    .filter((order) => {
+      const matchStatus =
+        statusFilter === 'all' || order.orderStatus === Number(statusFilter);
+      if (!search) return matchStatus;
+      const q = search.toLowerCase();
+      const match =
+        String(order.sku        ?? '').toLowerCase().includes(q) ||
+        String(order.waiterName ?? '').toLowerCase().includes(q) ||
+        String(order.tableNumber ?? '').toLowerCase().includes(q) ||
+        (order.items ?? []).map((it) => it.productName ?? '').join(' ').toLowerCase().includes(q);
+      return matchStatus && match;
+    })
+    .sort((a, b) => {
+      const sd = (STATUS_ORDER[a.orderStatus] ?? 9) - (STATUS_ORDER[b.orderStatus] ?? 9);
+      if (sd !== 0) return sd;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
+  const total     = dateOrders.length;
+  const preparing = dateOrders.filter((o) => o.orderStatus === 1).length;
+  const cancelled = dateOrders.filter((o) => o.orderStatus === 2).length;
+  const finished  = dateOrders.filter((o) => o.orderStatus === 3).length;
 
   const canEdit = hasPermission('Order_ItemIncrease');
+
+  const finishMutation = useMutation({
+    mutationFn: (id) => orderAPI.changeStatus(id, OrderStatus.Finished),
+    onSuccess: (_, id) => {
+      // Free the table after payment
+      const order = orders.find(o => o.id === id);
+      let tableId = order?.tableId;
+      if (!tableId && order?.tableNumber) {
+        const tables = queryClient.getQueryData(['tables']) ?? [];
+        tableId = tables.find(t => t.tableNumber === order.tableNumber)?.id;
+      }
+      if (tableId) {
+        queryClient.setQueryData(['tables'], (old) =>
+          Array.isArray(old)
+            ? old.map(t => t.id === tableId ? { ...t, tableStatus: TableStatus.Empty } : t)
+            : old
+        );
+      }
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast.success("To'lov qabul qilindi");
+    },
+    onError: () => toast.error("Xatolik yuz berdi"),
+  });
 
   // ── RENDER ────────────────────────────────────────────────────────────────
 
@@ -229,18 +276,16 @@ export default function OrdersPage() {
     <div className="p-6 bg-gray-50 dark:bg-gray-950 min-h-screen">
 
       {/* ── HEADER ── */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-xl font-black text-gray-900 dark:text-white">Buyurtmalar</h1>
           <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">
-            {waiter ? 'Mening faol buyurtmalarim' : 'Barcha buyurtmalar'}
+            {waiter ? 'Mening faol buyurtmalarim' : dateFilter === 'today' ? 'Bugungi buyurtmalar' : 'Barcha buyurtmalar'}
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">15 soniya</span>
-          </div>
+
+
           {hasPermission('Order_Create') && (
             <button
               onClick={() => navigate('/pos')}
@@ -253,6 +298,33 @@ export default function OrdersPage() {
           )}
         </div>
       </div>
+
+      {/* ── SANA FILTRI — faqat admin/kassir uchun ── */}
+      {!waiter && (
+        <div className="flex gap-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-1 w-fit mb-4">
+          <button
+            onClick={() => setDateFilter('today')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              dateFilter === 'today'
+                ? 'bg-orange-500 text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+          >
+            <CalendarDays size={14} />
+            Bugun
+          </button>
+          <button
+            onClick={() => setDateFilter('all')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              dateFilter === 'all'
+                ? 'bg-orange-500 text-white shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+            }`}
+          >
+            Hammasi
+          </button>
+        </div>
+      )}
 
       {/* ── STATS ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -285,6 +357,7 @@ export default function OrdersPage() {
                        focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-200"
           />
         </div>
+
         {STATUS_FILTERS.map((f) => (
           <button
             key={f.value}
@@ -322,8 +395,10 @@ export default function OrdersPage() {
               order={order}
               onView={setViewingOrder}
               onEdit={setEditingOrderId}
+              onFinish={(id) => finishMutation.mutate(id)}
               canEdit={canEdit}
               canPrint={!waiter}
+              canFinish={!waiter && order.orderStatus === OrderStatus.Accepted}
             />
           ))}
         </div>

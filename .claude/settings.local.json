@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Compress-Archive -Path ''publish\\\\*'' -DestinationPath ''publish.zip'' -Force\")",
+      "Bash(npm run build)",
+      "Bash(npm install @microsoft/signalr --save)"
+    ]
+  }
+}

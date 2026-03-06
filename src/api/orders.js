@@ -39,9 +39,9 @@ const normalizeOrder = (o) => {
 };
 
 export const ORDER_STATUS_COLORS = {
-  1: 'bg-blue-100 text-blue-700',    // Accepted
-  2: 'bg-red-100 text-red-700',      // Cancelled
-  3: 'bg-green-100 text-green-700',  // Finished
+  1: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',    // Accepted
+  2: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',        // Cancelled
+  3: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300', // Finished
 };
 
 // Backward compatibility aliases
@@ -176,6 +176,23 @@ export const orderAPI = {
       `/Order/CancelItem/${orderId}/items/cancel`,
       null,
       { params: { productId, ...(reason && { reason }) } }
+    );
+    return res.data;
+  },
+
+  /** POST /Order/PrintCashierReceipt/{orderId}/print-cashier */
+  printCashier: (orderId) =>
+    api.post(`/Order/PrintCashierReceipt/${orderId}/print-cashier`).then(r => r.data),
+
+  /**
+   * Vositachilik haqqini yoqish/o'chirish
+   * PATCH /Order/ChangeServiceCharge/{orderId}/service-charge?serviceCharge=true|false
+   */
+  changeServiceCharge: async (orderId, serviceCharge) => {
+    const res = await api.patch(
+      `/Order/ChangeServiceCharge/${orderId}/service-charge`,
+      null,
+      { params: { serviceCharge } }
     );
     return res.data;
   },

@@ -372,8 +372,6 @@ const ProductsPage = () => {
                     <option value="1">Oshxona</option>
                     <option value="2">Somsoxona</option>
                     <option value="3">Kassa</option>
-                    <option value="4">Bar</option>
-                    <option value="5">Extra</option>
                   </select>
                 </div>
 

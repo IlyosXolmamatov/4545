@@ -12,6 +12,9 @@ import { useAuthStore } from '../store/authStore';
 import ToggleActiveButton from '../components/ToggleActiveButton';
 import ConfirmModal from '../components/ConfirmModal';
 
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
 // ─── CATEGORY COLOR PALETTE ───────────────────────────────────────────────────
 const CAT_PALETTE = [
   { active: 'bg-violet-500 shadow-violet-200 dark:shadow-violet-900/40', idle: 'border-violet-200 dark:border-violet-800 text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20', dot: 'bg-violet-400', count: 'bg-violet-100 dark:bg-violet-900/60 text-violet-700 dark:text-violet-300' },
@@ -246,8 +249,6 @@ const ProductModal = ({ editing, categories, onClose, onSuccess }) => {
                 <option value="1">Oshxona</option>
                 <option value="2">Somsoxona</option>
                 <option value="3">Kassa</option>
-                <option value="4">Bar</option>
-                <option value="5">Extra</option>
               </select>
             </div>
             <div>
@@ -549,11 +550,14 @@ const MenuPage = () => {
                 </div>
 
                 <div className="p-3">
-                  <p className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-1 mb-1">{product.name}</p>
+                  <p className="font-semibold text-gray-900 dark:text-white text-sm line-clamp-1 mb-1">{cap(product.name)}</p>
                   {catName && (
-                    <span className="inline-block bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-xs font-medium px-2 py-0.5 rounded-full mb-2">
-                      {catName}
+                    <span className="inline-block bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-xs font-medium px-2 py-0.5 rounded-full mb-1">
+                      {cap(catName)}
                     </span>
+                  )}
+                  {product.description && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 line-clamp-2 mb-1">{cap(product.description)}</p>
                   )}
                   <div className="flex items-center justify-between mt-1">
                     <span className="font-bold text-gray-900 dark:text-white text-sm">

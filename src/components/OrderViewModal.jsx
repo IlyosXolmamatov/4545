@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-import { orderAPI, OrderStatus, ORDER_STATUS_COLORS, ORDER_TYPE_LABELS, ORDER_STATUS_LABELS } from '../api/orders';
+import { orderAPI, OrderStatus, ORDER_STATUS_COLORS, ORDER_TYPE_LABELS } from '../api/orders';
+import { TableStatus } from '../api/tables';
 import { useAuthStore } from '../store/authStore';
 import ConfirmModal from './ConfirmModal';
 
@@ -50,6 +51,15 @@ export default function OrderViewModal({ order, onClose }) {
       queryClient.invalidateQueries({ queryKey: ['orders', 'my-active'] });
       toast.success(status === OrderStatus.Finished ? "To'lov qabul qilindi!" : 'Status yangilandi');
       if (status === OrderStatus.Finished || status === OrderStatus.Cancelled) {
+        // Free the table when order is completed or cancelled
+        const tableId = detail?.tableId;
+        if (tableId) {
+          queryClient.setQueryData(['tables'], (old) =>
+            Array.isArray(old)
+              ? old.map(t => t.id === tableId ? { ...t, tableStatus: TableStatus.Empty } : t)
+              : old
+          );
+        }
         onClose();
       }
     },
@@ -71,22 +81,22 @@ export default function OrderViewModal({ order, onClose }) {
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
 
         {/* ── HEADER ── */}
-        <div className="flex items-start justify-between p-5 border-b border-gray-100 dark:border-gray-700">
-          <div>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white">
-              Buyurtma #{current.sku}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <h2 className="text-base font-bold text-gray-900 dark:text-white truncate">
+              #{current.sku}
             </h2>
-            <span className={`mt-1.5 inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${
-              ORDER_STATUS_COLORS[current.orderStatus] ?? 'bg-gray-100 text-gray-600'
+            <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${
+              ORDER_STATUS_COLORS[current.orderStatus] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
             }`}>
               {OrderStatus[current.orderStatus] ?? '—'}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="shrink-0 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           >
-            <X size={18} className="text-gray-500" />
+            <X size={18} className="text-gray-400 dark:text-gray-500" />
           </button>
         </div>
 
@@ -98,27 +108,23 @@ export default function OrderViewModal({ order, onClose }) {
         ) : (
           <>
             {/* ── META INFO ── */}
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4 px-5 py-4 border-b border-gray-100 dark:border-gray-700">
-              <div>
-                <p className="text-xs text-orange-500 font-medium mb-0.5">Stol</p>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                  {tableNum ? `#${tableNum}` : '— (TakeOut)'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-orange-500 font-medium mb-0.5">Ofitsant</p>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{waiterName}</p>
-              </div>
-              <div>
-                <p className="text-xs text-orange-500 font-medium mb-0.5">Vaqt</p>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{formatDate(createdAt)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-orange-500 font-medium mb-0.5">To'lov turi</p>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                  {ORDER_TYPE_LABELS[current.orderType] ?? '—'}
-                </p>
-              </div>
+            <div className="grid grid-cols-2 gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+              {[
+                { label: 'Tur',        value: ORDER_TYPE_LABELS[current.orderType] ?? '—' },
+                { label: 'Stol',       value: tableNum ? `#${tableNum}` : '—' },
+                { label: 'Ofitsant',   value: waiterName, truncate: true },
+                { label: 'Vaqt',       value: formatDate(createdAt) },
+              ].map(({ label, value, truncate }) => (
+                <div key={label} className="bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5">
+                  <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+                  <p
+                    className={`text-sm font-semibold text-gray-900 dark:text-white ${truncate ? 'truncate' : ''}`}
+                    title={truncate ? value : undefined}
+                  >
+                    {value}
+                  </p>
+                </div>
+              ))}
             </div>
 
             {/* ── MAHSULOTLAR ── */}
@@ -129,7 +135,7 @@ export default function OrderViewModal({ order, onClose }) {
                   <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.productName}</p>
-                      <p className="text-xs text-gray-500">{item.count}× @ {(item.priceAtTime || 0).toLocaleString('ru-RU')} so'm</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.count}× @ {(item.priceAtTime || 0).toLocaleString('ru-RU')} so'm</p>
                     </div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       {((item.count || 1) * (item.priceAtTime || 0)).toLocaleString('ru-RU')} so'm
@@ -142,21 +148,25 @@ export default function OrderViewModal({ order, onClose }) {
             {/* ── TOTAL ── */}
             <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 space-y-1.5">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Jami savdo:</span>
-                <span className="font-semibold text-gray-800 dark:text-gray-200">
+                <span className="text-gray-500 dark:text-gray-300">Jami:</span>
+                <span className="font-semibold text-gray-800 dark:text-white">
                   {formatPrice(current.totalAmount)}
                 </span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-rose-500">Vositachilik haqqi ({COMMISSION_RATE * 100}%):</span>
-                <span className="font-semibold text-rose-500">
-                  {formatPrice(Math.round((current.totalAmount || 0) * COMMISSION_RATE))}
-                </span>
-              </div>
+              {current.orderType === 1 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-rose-500">Xizmat haqqi ({COMMISSION_RATE * 100}%):</span>
+                  <span className="font-semibold text-rose-500">
+                    {formatPrice(Math.round((current.totalAmount || 0) * COMMISSION_RATE))}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between pt-1 border-t border-gray-200 dark:border-gray-700">
                 <span className="font-bold text-gray-900 dark:text-white">Umumiy to'lanadigan:</span>
                 <span className="font-bold text-emerald-600 dark:text-emerald-400 text-base">
-                  {formatPrice(Math.round((current.totalAmount || 0) * (1 + COMMISSION_RATE)))}
+                  {current.orderType === 1
+                    ? formatPrice(Math.round((current.totalAmount || 0) * (1 + COMMISSION_RATE)))
+                    : formatPrice(current.totalAmount)}
                 </span>
               </div>
             </div>

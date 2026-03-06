@@ -52,6 +52,7 @@ const TableCard = ({ table, onEdit, onDelete, canEdit, canDelete, isDark }) => {
       badge: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
       label: "Bo'sh",
       dot: null,
+      cardBg: isDark ? 'bg-gray-900' : 'bg-white',
       cardBorder: isDark ? 'border-gray-800 hover:border-emerald-500/50' : 'border-gray-100 hover:border-emerald-300',
       number: isDark ? 'text-gray-100' : 'text-gray-800',
     },
@@ -59,15 +60,17 @@ const TableCard = ({ table, onEdit, onDelete, canEdit, canDelete, isDark }) => {
       badge: 'bg-rose-500/20 text-rose-400 border border-rose-500/30',
       label: 'Band',
       dot: 'bg-rose-500',
-      cardBorder: isDark ? 'border-rose-900/50 hover:border-rose-500/50' : 'border-rose-100 hover:border-rose-300',
-      number: isDark ? 'text-rose-400' : 'text-rose-500',
+      cardBg: isDark ? 'bg-rose-950/60' : 'bg-rose-50',
+      cardBorder: isDark ? 'border-rose-800/70 hover:border-rose-500' : 'border-rose-200 hover:border-rose-400',
+      number: isDark ? 'text-rose-400' : 'text-rose-600',
     },
     [TableStatus.Reserved]: {
       badge: 'bg-amber-500/20 text-amber-400 border border-amber-500/30',
       label: 'Rezerv',
       dot: 'bg-amber-400',
-      cardBorder: isDark ? 'border-amber-900/50 hover:border-amber-500/50' : 'border-amber-100 hover:border-amber-300',
-      number: isDark ? 'text-amber-400' : 'text-amber-500',
+      cardBg: isDark ? 'bg-amber-950/40' : 'bg-amber-50',
+      cardBorder: isDark ? 'border-amber-800/60 hover:border-amber-500' : 'border-amber-200 hover:border-amber-400',
+      number: isDark ? 'text-amber-400' : 'text-amber-600',
     },
   }[status]);
 
@@ -76,7 +79,7 @@ const TableCard = ({ table, onEdit, onDelete, canEdit, canDelete, isDark }) => {
   return (
     <div className={`relative rounded-2xl border-2 p-4 cursor-pointer group
                     transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg
-                    ${isDark ? 'bg-gray-900' : 'bg-white'} ${statusCfg.cardBorder}`}>
+                    ${statusCfg.cardBg} ${statusCfg.cardBorder}`}>
 
       {/* Type badge — yuqori o'ng */}
       <div className={`absolute top-2.5 right-2.5 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide ${

@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import {
   Users, UtensilsCrossed, Table2, Grid3x3,
-  ShoppingCart, DollarSign, TrendingUp, Award, Loader2,
+  ShoppingCart, DollarSign, TrendingUp, Award, Loader2, Lock,
 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import { userAPI } from '../api/users';
 import { productAPI } from '../api/products';
 import { tableAPI } from '../api/tables';
@@ -100,6 +101,60 @@ function WaiterView({ user }) {
   );
 }
 
+// ─── DAILY CLOSE BUTTON (Admin + Kassir uchun) ────────────────────────────────
+function DailyCloseButton() {
+  const [confirm, setConfirm] = useState(false);
+
+  const mutation = useMutation({
+    mutationFn: analyticsAPI.dailyClose,
+    onSuccess: () => {
+      toast.success('Kunlik yopish muvaffaqiyatli amalga oshirildi!');
+      setConfirm(false);
+    },
+    onError: (err) => {
+      const msg = err?.response?.data?.message || err?.response?.data;
+      toast.error(typeof msg === 'string' ? msg : 'Kunlik yopishda xatolik yuz berdi');
+      setConfirm(false);
+    },
+  });
+
+  if (confirm) {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Ishonchingiz komilmi?</span>
+        <button
+          onClick={() => mutation.mutate()}
+          disabled={mutation.isPending}
+          className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white
+                     rounded-xl text-sm font-semibold transition-colors disabled:opacity-60"
+        >
+          {mutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
+          Ha, yop
+        </button>
+        <button
+          onClick={() => setConfirm(false)}
+          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600
+                     text-gray-700 dark:text-gray-300 rounded-xl text-sm font-semibold transition-colors"
+        >
+          Bekor
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => setConfirm(true)}
+      className="flex items-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-900/20
+                 border border-red-200 dark:border-red-800 hover:bg-red-100 dark:hover:bg-red-900/40
+                 text-red-700 dark:text-red-400 rounded-xl text-sm font-semibold transition-colors"
+    >
+      <Lock size={15} />
+      Kunni yopish
+    </button>
+  );
+}
+
 // ─── CASHIER VIEW ─────────────────────────────────────────────────────────────
 function CashierView({ user }) {
   const [filter, setFilter] = useState({ period: 'Daily', startDate: null, endDate: null });
@@ -129,7 +184,10 @@ function CashierView({ user }) {
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Kassir Paneli</h1>
           <p className="text-gray-500 dark:text-gray-400 mt-1">Xush kelibsiz, {user?.name}! Bu sizning hisobingiz login va parollarni xavfsiz saqlang!!!</p>
         </div>
-        <PeriodFilter filter={filter} onChange={setFilter} />
+        <div className="flex flex-wrap items-center gap-3">
+          <DailyCloseButton />
+          <PeriodFilter filter={filter} onChange={setFilter} />
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -363,9 +421,12 @@ export default function AdminDashboard() {
   return (
     <div className="p-4 sm:p-8 bg-gray-50 dark:bg-gray-950 min-h-screen">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-        <p className="text-gray-500 dark:text-gray-400 mt-1">Xush kelibsiz, {user?.name || 'Admin'}!</p>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Xush kelibsiz, {user?.name || 'Admin'}!</p>
+        </div>
+        <DailyCloseButton />
       </div>
 
       {/* Stats Grid */}
@@ -392,7 +453,9 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Tezkor harakatlar</h2>
+        <div className="mb-4">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white">Tezkor harakatlar</h2>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { label: "Xodim qo'shish",      icon: Users,           path: '/users' },

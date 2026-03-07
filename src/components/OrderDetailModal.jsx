@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { extractErrorMessage } from '../utils/errorHandler';
 import {
   X, Loader2, Plus, Minus, Trash2,
   UtensilsCrossed, ShoppingBag, ArrowLeftRight,
@@ -36,8 +37,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
   const [changeTableMode, setChangeTableMode] = useState(false);
   const [newTableId, setNewTableId] = useState(null);
   const [dlg, setDlg] = useState(null);
-  const [decreaseDialog, setDecreaseDialog] = useState(null); // { productId, productName }
-  const [decreaseReason, setDecreaseReason] = useState('');
+  const [decreaseDialog, setDecreaseDialog] = useState(null);
 
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', orderId],
@@ -58,65 +58,62 @@ const OrderDetailModal = ({ orderId, onClose }) => {
     queryClient.invalidateQueries({ queryKey: ['tables'] });
   };
 
-  // qaysi productId pending ekanligini alohida kuzatish
-  const [pendingIncrease, setPendingIncrease] = useState(null);
-  const [pendingDecrease, setPendingDecrease] = useState(null);
+  // O'zgarishlar: { [productId]: delta } — musbat=oshirish, manfiy=kamaytirish
+  const [changes, setChanges] = useState({});
+  const snapshot = useRef(null);
 
-  const increaseItemMutation = useMutation({
-    mutationFn: ({ productId, count }) => {
-      setPendingIncrease(productId);
-      return orderAPI.increaseItem(orderId, productId, count);
-    },
-    onMutate: async ({ productId, count }) => {
-      await queryClient.cancelQueries({ queryKey: ['order', orderId] });
-      const previous = queryClient.getQueryData(['order', orderId]);
-      queryClient.setQueryData(['order', orderId], (old) => {
-        if (!old) return old;
-        const items = (old.items || []).map(i =>
-          i.productId === productId ? { ...i, count: i.count + count } : i
-        );
-        const total = items.reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0);
-        return { ...old, items, totalAmount: total };
+  const hasChanges = Object.values(changes).some(d => d !== 0);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const increases = [];
+      const decreases = [];
+      Object.entries(changes).forEach(([productId, delta]) => {
+        if (delta > 0) increases.push({ productId, count: delta });
+        else if (delta < 0) decreases.push({ productId, count: Math.abs(delta) });
       });
-      return { previous };
+      const reqs = [];
+      if (increases.length) reqs.push(orderAPI.increaseMultiple(orderId, increases));
+      if (decreases.length) reqs.push(orderAPI.decreaseMultiple(orderId, decreases));
+      await Promise.all(reqs);
     },
-    onError: (_, __, ctx) => {
-      if (ctx?.previous) queryClient.setQueryData(['order', orderId], ctx.previous);
-      toast.error('Oshirishda xatolik');
-    },
-    onSettled: (_, __, { productId }) => {
-      setPendingIncrease(null);
+    onSuccess: () => {
+      setChanges({});
+      snapshot.current = null;
       invalidate();
+      toast.success('Saqlandi');
+    },
+    onError: (err) => {
+      if (snapshot.current) queryClient.setQueryData(['order', orderId], snapshot.current);
+      setChanges({});
+      snapshot.current = null;
+      toast.error(extractErrorMessage(err, 'Saqlashda xatolik'));
     },
   });
 
-  const decreaseItemMutation = useMutation({
-    mutationFn: ({ productId, count, aboutOfCancelled = '' }) => {
-      setPendingDecrease(productId);
-      return orderAPI.decreaseItem(orderId, productId, count, aboutOfCancelled);
-    },
-    onMutate: async ({ productId, count }) => {
-      await queryClient.cancelQueries({ queryKey: ['order', orderId] });
-      const previous = queryClient.getQueryData(['order', orderId]);
-      queryClient.setQueryData(['order', orderId], (old) => {
-        if (!old) return old;
-        const items = (old.items || [])
-          .map(i => i.productId === productId ? { ...i, count: Math.max(0, i.count - count) } : i)
-          .filter(i => i.count > 0);
-        const total = items.reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0);
-        return { ...old, items, totalAmount: total };
-      });
-      return { previous };
-    },
-    onError: (_, __, ctx) => {
-      if (ctx?.previous) queryClient.setQueryData(['order', orderId], ctx.previous);
-      toast.error('Kamaytirishda xatolik');
-    },
-    onSettled: (_, __, { productId }) => {
-      setPendingDecrease(null);
-      invalidate();
-    },
-  });
+  const handleIncrease = (productId) => {
+    if (!snapshot.current) snapshot.current = queryClient.getQueryData(['order', orderId]);
+    setChanges(prev => ({ ...prev, [productId]: (prev[productId] || 0) + 1 }));
+    queryClient.setQueryData(['order', orderId], (old) => {
+      if (!old) return old;
+      const items = (old.items || []).map(i =>
+        i.productId === productId ? { ...i, count: i.count + 1 } : i
+      );
+      return { ...old, items, totalAmount: items.reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0) };
+    });
+  };
+
+  const handleDecrease = (productId) => {
+    if (!snapshot.current) snapshot.current = queryClient.getQueryData(['order', orderId]);
+    setChanges(prev => ({ ...prev, [productId]: (prev[productId] || 0) - 1 }));
+    queryClient.setQueryData(['order', orderId], (old) => {
+      if (!old) return old;
+      const items = (old.items || [])
+        .map(i => i.productId === productId ? { ...i, count: Math.max(0, i.count - 1) } : i)
+        .filter(i => i.count > 0);
+      return { ...old, items, totalAmount: items.reduce((s, i) => s + (i.priceAtTime || 0) * i.count, 0) };
+    });
+  };
 
   const deleteItemMutation = useMutation({
     mutationFn: (productId) => {
@@ -130,7 +127,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
       invalidate();
       toast.success('Mahsulot o\'chirildi');
     },
-    onError: () => toast.error("Mahsulotni o'chirishda xatolik"),
+    onError: (err) => toast.error(extractErrorMessage(err, "Mahsulotni o'chirishda xatolik")),
   });
 
   const changeStatusMutation = useMutation({
@@ -140,7 +137,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
       toast.success(status === OrderStatus.Finished ? "To'lov qabul qilindi!" : 'Status yangilandi');
       if (status === OrderStatus.Finished || status === OrderStatus.Cancelled) onClose();
     },
-    onError: () => toast.error('Statusni yangilashda xatolik'),
+    onError: (err) => toast.error(extractErrorMessage(err, 'Statusni yangilashda xatolik')),
   });
 
   const changeTableMutation = useMutation({
@@ -151,7 +148,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
       setChangeTableMode(false);
       setNewTableId(null);
     },
-    onError: () => toast.error('Stolni almashtirishda xatolik'),
+    onError: (err) => toast.error(extractErrorMessage(err, 'Stolni almashtirishda xatolik')),
   });
 
   const isFinished = order?.orderStatus === OrderStatus.Finished;
@@ -292,27 +289,23 @@ const OrderDetailModal = ({ orderId, onClose }) => {
                         <div className="flex items-center gap-1">
                           {hasPermission('Order_ItemDecrease') && (
                             <button
-                              onClick={() => { setDecreaseReason(''); setDecreaseDialog({ productId: item.productId, productName: item.productName }); }}
-                              disabled={pendingDecrease === item.productId || pendingIncrease === item.productId}
+                              onClick={() => handleDecrease(item.productId)}
+                              disabled={saveMutation.isPending}
                               className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-red-100 hover:text-red-600 disabled:opacity-40"
                               title="Miqdorni kamaytirish"
                             >
-                              {pendingDecrease === item.productId
-                                ? <Loader2 size={10} className="animate-spin" />
-                                : <Minus size={12} />}
+                              <Minus size={12} />
                             </button>
                           )}
                           <span className="w-6 text-center text-sm font-bold text-gray-900 dark:text-white">{item.count}</span>
                           {hasPermission('Order_ItemIncrease') && (
                             <button
-                              onClick={() => increaseItemMutation.mutate({ productId: item.productId, count: 1 })}
-                              disabled={pendingIncrease === item.productId || pendingDecrease === item.productId}
+                              onClick={() => handleIncrease(item.productId)}
+                              disabled={saveMutation.isPending}
                               className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-green-100 hover:text-green-600 disabled:opacity-40"
                               title="Miqdorni oshirish"
                             >
-                              {pendingIncrease === item.productId
-                                ? <Loader2 size={10} className="animate-spin" />
-                                : <Plus size={12} />}
+                              <Plus size={12} />
                             </button>
                           )}
                           {(hasPermission('Order_ItemDecrease') || hasPermission('Order_Delete')) && (
@@ -345,7 +338,20 @@ const OrderDetailModal = ({ orderId, onClose }) => {
 
             {/* FOOTER */}
             {!isLocked && (
-              <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+              <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex flex-col gap-2">
+                {hasChanges && (
+                  <button
+                    type="button"
+                    onClick={() => saveMutation.mutate()}
+                    disabled={saveMutation.isPending}
+                    className="w-full py-3 px-4 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+                  >
+                    {saveMutation.isPending
+                      ? <Loader2 size={18} className="animate-spin" />
+                      : null}
+                    Saqlash
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {
@@ -362,52 +368,6 @@ const OrderDetailModal = ({ orderId, onClose }) => {
           </>
         )}
       </div>
-
-      {/* Decrease reason dialog */}
-      {decreaseDialog && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-            <h3 className="font-bold text-gray-900 dark:text-white mb-1">Kamaytirish sababi</h3>
-            <p className="text-xs text-gray-400 mb-3">"{decreaseDialog.productName}"</p>
-            <input
-              type="text"
-              autoFocus
-              value={decreaseReason}
-              onChange={e => setDecreaseReason(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && decreaseReason.trim()) {
-                  decreaseItemMutation.mutate({ productId: decreaseDialog.productId, count: 1, aboutOfCancelled: decreaseReason.trim() });
-                  setDecreaseDialog(null);
-                }
-              }}
-              placeholder="Sabab kiriting..."
-              className="w-full px-3 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700
-                         bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white
-                         focus:outline-none focus:border-orange-400 mb-4"
-            />
-            <div className="flex gap-2">
-              <button
-                onClick={() => setDecreaseDialog(null)}
-                className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700
-                           text-gray-600 dark:text-gray-400 text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800"
-              >
-                Bekor
-              </button>
-              <button
-                disabled={!decreaseReason.trim()}
-                onClick={() => {
-                  decreaseItemMutation.mutate({ productId: decreaseDialog.productId, count: 1, aboutOfCancelled: decreaseReason.trim() });
-                  setDecreaseDialog(null);
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600
-                           text-white text-sm font-semibold disabled:opacity-50 transition-colors"
-              >
-                Tasdiqlash
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <ConfirmModal
         open={!!dlg}

@@ -3,7 +3,10 @@
     "allow": [
       "Bash(powershell -Command \"Compress-Archive -Path ''publish\\\\*'' -DestinationPath ''publish.zip'' -Force\")",
       "Bash(npm run build)",
-      "Bash(npm install @microsoft/signalr --save)"
+      "Bash(npm install @microsoft/signalr --save)",
+      "Bash(powershell -Command \"Compress-Archive -Path dist\\\\* -DestinationPath publish.zip -Force\")",
+      "Bash(powershell -Command \"\\(Get-Item publish.zip\\).Length / 1KB\")",
+      "Bash(powershell -Command \"Compress-Archive -Path ''dist\\\\*'' -DestinationPath ''publish.zip'' -Force\")"
     ]
   }
 }

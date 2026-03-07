@@ -11,6 +11,7 @@ import {
   TableStatus,
   TableType,
 } from '../api/tables';
+import { extractErrorMessage } from '../utils/errorHandler';
 import { useAuthStore } from '../store/authStore';
 import { useThemeStore } from '../store/themeStore';
 import ConfirmModal from '../components/ConfirmModal';
@@ -36,7 +37,6 @@ const TYPE_CONFIG = [
 const DEFAULT_FORM = {
   tableNumber: '',
   capacity:    '',
-  waiterName:  '',
   tableStatus: TableStatus.Free,
   tableType:   TableType.Simple,
 };
@@ -209,44 +209,25 @@ const TablesPage = () => {
 
   // ── Mutations ──
   const createMutation = useMutation({
-    mutationFn: ({ tableNumber, tableStatus, tableType, capacity, waiterName }) =>
-      tableAPI.create({ tableNumber, tableStatus, tableType, capacity, waiterName }),
+    mutationFn: ({ tableNumber, tableStatus, tableType, capacity }) =>
+      tableAPI.create({ tableNumber, tableStatus, tableType, capacity }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tables'] });
       toast.success("Stol qo'shildi");
       closeModal();
     },
-    onError: (err) => {
-      const data = err.response?.data;
-      const msg = (typeof data === 'string' ? data : null)
-                || data?.message
-                || data?.title
-                || data?.detail
-                || err?.message
-                || "Qo'shishda xatolik";
-      toast.error(msg);
-    },
+    onError: (err) => toast.error(extractErrorMessage(err, "Qo'shishda xatolik")),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, tableNumber, tableStatus, tableType, capacity, waiterName }) =>
-      tableAPI.update({ id, tableNumber, tableStatus, tableType, capacity, waiterName }),
+    mutationFn: ({ id, tableNumber, tableStatus, tableType, capacity }) =>
+      tableAPI.update({ id, tableNumber, tableStatus, tableType, capacity }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tables'] });
       toast.success('Stol yangilandi');
       closeModal();
     },
-    onError: (err) => {
-      const data = err.response?.data;
-      const msg = (typeof data === 'string' ? data : null)
-                || data?.message
-                || data?.title
-                || data?.detail
-                || (data?.errors ? Object.values(data.errors).flat().join(', ') : null)
-                || err?.message
-                || 'Yangilashda xatolik';
-      toast.error(msg);
-    },
+    onError: (err) => toast.error(extractErrorMessage(err, 'Yangilashda xatolik')),
   });
 
   const deleteMutation = useMutation({
@@ -255,10 +236,7 @@ const TablesPage = () => {
       queryClient.invalidateQueries({ queryKey: ['tables'] });
       toast.success("Stol o'chirildi");
     },
-    onError: (err) => {
-      const msg = err.response?.data?.message ?? err.message ?? "O'chirishda xatolik";
-      toast.error(msg);
-    },
+    onError: (err) => toast.error(extractErrorMessage(err, "O'chirishda xatolik")),
   });
 
   // ── Handlers ──
@@ -275,7 +253,6 @@ const TablesPage = () => {
     setFormData({
       tableNumber: table.tableNumber,
       capacity:    table.capacity ?? '',
-      waiterName:  table.waiterName ?? '',
       tableStatus: table.tableStatus,
       tableType:   table.tableType,
     });
@@ -319,7 +296,6 @@ const TablesPage = () => {
       capacity:    cap,
       tableStatus: parseInt(formData.tableStatus),
       tableType:   parseInt(formData.tableType),
-      waiterName:  formData.waiterName?.trim() || '',
     };
 
     if (isEditing) updateMutation.mutate({ id: editId, ...payload });

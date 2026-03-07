@@ -31,7 +31,8 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - xatolarni boshqaradi
+// Response interceptor - faqat auth xatolarini global boshqaradi.
+// Qolgan xatolar (4xx, 5xx, network) mutation onError'da ko'rsatiladi.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -41,9 +42,9 @@ api.interceptors.response.use(
       window.location.href = '/login';
       toast.error('Sessiya tugadi. Qaytadan kirish kerak');
     } else if (error.response?.status === 403) {
-      toast.error('Sizda ruxsat yo\'q');
-    } else {
-      toast.error(error.response?.data?.message || 'Xatolik yuz berdi');
+      toast.error("Sizda bu amalni bajarish uchun ruxsat yo'q");
+    } else if (!error.response) {
+      toast.error("Internet ulanishi yo'q");
     }
     return Promise.reject(error);
   }

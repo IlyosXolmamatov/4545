@@ -103,7 +103,7 @@ export const orderAPI = {
   },
 
   /**
-   * Buyurtma itemini oshirish
+   * Buyurtma itemini oshirish (bitta)
    * PATCH /Order/IncreaseItem/{orderId}/items/increase?productId=x&count=n
    */
   increaseItem: async (orderId, productId, count = 1) => {
@@ -116,7 +116,20 @@ export const orderAPI = {
   },
 
   /**
-   * Buyurtma itemini kamaytirish
+   * Bir nechta itemni bir vaqtda oshirish (bulk)
+   * PATCH /Order/IncreaseItems/{orderId}/items/increase-multiple
+   * Body: [{productId, count}, ...]
+   */
+  increaseMultiple: async (orderId, items) => {
+    const res = await api.patch(
+      `/Order/IncreaseItems/${orderId}/items/increase-multiple`,
+      items
+    );
+    return res.data;
+  },
+
+  /**
+   * Buyurtma itemini kamaytirish (bitta)
    * PATCH /Order/DecreaseItem/{orderId}/items/decrease?productId=x&count=n&aboutOfCancelled=reason
    */
   decreaseItem: async (orderId, productId, count = 1, aboutOfCancelled = '') => {
@@ -124,6 +137,19 @@ export const orderAPI = {
       `/Order/DecreaseItem/${orderId}/items/decrease`,
       null,
       { params: { productId, count, aboutOfCancelled } }
+    );
+    return res.data;
+  },
+
+  /**
+   * Bir nechta itemni bir vaqtda kamaytirish (bulk)
+   * PATCH /Order/DecreaseItems/{orderId}/items/decrease-multiple
+   * Body: [{productId, count}, ...]
+   */
+  decreaseMultiple: async (orderId, items) => {
+    const res = await api.patch(
+      `/Order/DecreaseItems/${orderId}/items/decrease-multiple`,
+      items
     );
     return res.data;
   },
@@ -186,13 +212,13 @@ export const orderAPI = {
 
   /**
    * Vositachilik haqqini yoqish/o'chirish
-   * PATCH /Order/ChangeServiceCharge/{orderId}/service-charge?serviceCharge=true|false
+   * PATCH /Order/UpdateServiceCharge/{orderId}/service-charge?enableServiceCharge=true|false
    */
-  changeServiceCharge: async (orderId, serviceCharge) => {
+  changeServiceCharge: async (orderId, enableServiceCharge) => {
     const res = await api.patch(
-      `/Order/ChangeServiceCharge/${orderId}/service-charge`,
+      `/Order/UpdateServiceCharge/${orderId}/service-charge`,
       null,
-      { params: { serviceCharge } }
+      { params: { enableServiceCharge } }
     );
     return res.data;
   },

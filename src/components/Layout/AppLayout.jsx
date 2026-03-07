@@ -4,13 +4,11 @@ import { Menu } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import Sidebar from './Sidebar';
 import { useTableHub } from '../../hooks/useTableHub';
-import { useOrderHub } from '../../hooks/useOrderHub';
 
 const AppLayout = () => {
   const { user, isLoading } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   useTableHub();
-  useOrderHub();
 
   if (isLoading) {
     return (

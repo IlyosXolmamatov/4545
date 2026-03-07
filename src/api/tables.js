@@ -32,39 +32,6 @@ export const TABLE_TYPE_LABELS = {
   [TableType.VIP]: 'VIP',
 };
 
-// --- CAPACITY HELPERS (localStorage) ---
-// Backend hozir capacity field'ni qabul qilmaydi.
-// Keyinchalik backend yangilanganda bu helper'larni API call'larga almashtirish kifoya.
-
-const CAPACITY_KEY = 'table_capacities';
-
-export const capacityHelpers = {
-  get: (tableId) => {
-    try {
-      const caps = JSON.parse(localStorage.getItem(CAPACITY_KEY) || '{}');
-      return caps[tableId] ?? null;
-    } catch {
-      return null;
-    }
-  },
-
-  set: (tableId, capacity) => {
-    try {
-      const caps = JSON.parse(localStorage.getItem(CAPACITY_KEY) || '{}');
-      caps[tableId] = capacity;
-      localStorage.setItem(CAPACITY_KEY, JSON.stringify(caps));
-    } catch { }
-  },
-
-  delete: (tableId) => {
-    try {
-      const caps = JSON.parse(localStorage.getItem(CAPACITY_KEY) || '{}');
-      delete caps[tableId];
-      localStorage.setItem(CAPACITY_KEY, JSON.stringify(caps));
-    } catch { }
-  },
-};
-
 // --- API FUNCTIONS ---
 
 export const tableAPI = {
@@ -92,18 +59,15 @@ export const tableAPI = {
   /**
    * Yangi stol yaratish
    * POST /Table/CreateTable
-   * @param {{ tableNumber: number, tableStatus: number, tableType: number }} data
+   * @param {{ tableNumber: number, capacity: number, tableStatus: number, tableType: number }} data
    * @returns {Promise<boolean>}
    */
-  create: async ({ tableNumber, tableStatus, tableType, capacity, waiterName }) => {
+  create: async ({ tableNumber, capacity, tableStatus, tableType }) => {
     const response = await axiosClient.post('/Table/CreateTable', {
-      tableNumber,
-      tableStatus,
-      tableType,
-      // backend may now accept capacity and waiterName
-      // include them when present (caller should pass if available)
-      ...(capacity !== undefined && { capacity: Number(capacity) }),
-      ...(waiterName !== undefined && { waiterName }),
+      tableNumber: Number(tableNumber),
+      capacity: Number(capacity),
+      tableStatus: Number(tableStatus),
+      tableType: Number(tableType),
     });
     return response.data;
   },
@@ -111,18 +75,16 @@ export const tableAPI = {
   /**
    * Stolni yangilash
    * PUT /Table/UpdateTable
-   * @param {{ id: string, tableNumber: number, tableStatus: number, tableType: number }} data
+   * @param {{ id: string, tableNumber: number, capacity: number, tableStatus: number, tableType: number }} data
    */
-  update: async ({ id, tableNumber, tableStatus, tableType, capacity, waiterName }) => {
-    const payload = {
+  update: async ({ id, tableNumber, capacity, tableStatus, tableType }) => {
+    const response = await axiosClient.put('/Table/UpdateTable', {
       id,
       tableNumber: Number(tableNumber),
+      capacity: Number(capacity),
       tableStatus: Number(tableStatus),
       tableType: Number(tableType),
-      waiterName: waiterName ?? '',
-      ...(capacity !== undefined && { capacity: Number(capacity) }),
-    };
-    const response = await axiosClient.put('/Table/UpdateTable', payload);
+    });
     return response.data;
   },
 

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Eye, Search, ShoppingBag, Plus, Pencil,
   Clock, CheckCircle, XCircle, Wallet,
-  UtensilsCrossed, Printer, CalendarDays,
+  UtensilsCrossed, Printer, CalendarDays, Percent,
 } from 'lucide-react';
 
 import {
@@ -13,6 +13,7 @@ import {
   OrderStatus,
   ORDER_TYPE_LABELS,
 } from '../api/orders';
+import { extractErrorMessage } from '../utils/errorHandler';
 import { TableStatus } from '../api/tables';
 import { useAuthStore } from '../store/authStore';
 import OrderViewModal from '../components/OrderViewModal';
@@ -49,7 +50,7 @@ const formatTime = (d) => {
 
 // ─── ORDER CARD ───────────────────────────────────────────────────────────────
 
-function OrderCard({ order, onView, onEdit, onFinish, canEdit, canPrint, canFinish }) {
+function OrderCard({ order, onView, onEdit, onFinish, canEdit, canPrint, canFinish, onToggleServiceCharge }) {
   const meta   = STATUS_META[order.orderStatus] ?? STATUS_META[0];
   const Icon   = meta.Icon;
   const items  = order.items ?? [];
@@ -126,6 +127,21 @@ function OrderCard({ order, onView, onEdit, onFinish, canEdit, canPrint, canFini
 
       {/* ── BUTTONS ── */}
       <div className="flex flex-col gap-1.5 px-4 pb-4 pt-1">
+        {/* Service charge toggle — faqat admin/kassa, faqat aktiv (status=1) order */}
+        {onToggleServiceCharge && order.orderStatus === 1 && (
+          <button
+            onClick={() => onToggleServiceCharge(order.id, !(order.serviceCharge ?? true))}
+            className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-colors ${
+              (order.serviceCharge ?? true)
+                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50'
+                : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50'
+            }`}
+          >
+            <Percent size={12} />
+            {(order.serviceCharge ?? true) ? 'Xizmat haqqi: 15%' : "Xizmat haqqi: yo'q"}
+          </button>
+        )}
+
         {/* Row 1: Ko'rish + Tahrirlash */}
         <div className="flex gap-1.5">
           <button
@@ -247,6 +263,26 @@ export default function OrdersPage() {
 
   const canEdit = hasPermission('Order_ItemIncrease');
 
+  const serviceChargeMutation = useMutation({
+    mutationFn: ({ id, value }) => orderAPI.changeServiceCharge(id, value),
+    onMutate: ({ id, value }) => {
+      const key = waiter ? ['orders', 'my-active'] : ['orders'];
+      queryClient.setQueryData(key, (old) =>
+        Array.isArray(old) ? old.map(o => o.id === id ? { ...o, serviceCharge: value } : o) : old
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    },
+    onError: (err, { id, value }) => {
+      const key = waiter ? ['orders', 'my-active'] : ['orders'];
+      queryClient.setQueryData(key, (old) =>
+        Array.isArray(old) ? old.map(o => o.id === id ? { ...o, serviceCharge: !value } : o) : old
+      );
+      toast.error(extractErrorMessage(err, "Xizmat haqqini o'zgartirib bo'lmadi"));
+    },
+  });
+
   const finishMutation = useMutation({
     mutationFn: (id) => orderAPI.changeStatus(id, OrderStatus.Finished),
     onSuccess: (_, id) => {
@@ -267,7 +303,7 @@ export default function OrdersPage() {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success("To'lov qabul qilindi");
     },
-    onError: () => toast.error("Xatolik yuz berdi"),
+    onError: (err) => toast.error(extractErrorMessage(err, "To'lovda xatolik")),
   });
 
   // ── RENDER ────────────────────────────────────────────────────────────────
@@ -399,6 +435,7 @@ export default function OrdersPage() {
               canEdit={canEdit}
               canPrint={!waiter}
               canFinish={!waiter && order.orderStatus === OrderStatus.Accepted}
+              onToggleServiceCharge={!waiter ? (id, val) => serviceChargeMutation.mutate({ id, value: val }) : null}
             />
           ))}
         </div>

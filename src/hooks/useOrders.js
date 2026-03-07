@@ -18,6 +18,7 @@ export function useIncreaseItem() {
             const previousMy = qc.getQueryData(['orders', 'my-active']);
             const previousDetail = qc.getQueryData(['order', orderId]);
 
+            // Optimistic update — backend javob kelgunicha
             const patch = (data) => {
                 if (!data) return data;
                 return data.map((o) => {
@@ -28,7 +29,6 @@ export function useIncreaseItem() {
                     return { ...o, items, totalAmount: recalcTotal(items) };
                 });
             };
-
             const patchDetail = (d) => {
                 if (!d) return d;
                 const items = (d.items || []).map((it) =>
@@ -36,12 +36,22 @@ export function useIncreaseItem() {
                 );
                 return { ...d, items, totalAmount: recalcTotal(items) };
             };
-
             qc.setQueryData(['orders'], (old) => patch(old));
             qc.setQueryData(['orders', 'my-active'], (old) => patch(old));
             qc.setQueryData(['order', orderId], (old) => patchDetail(old));
 
             return { previousOrders, previousMy, previousDetail };
+        },
+        onSuccess(updatedOrder, { orderId }) {
+            // Backend to'liq order qaytarsa — cache ni to'g'ridan-to'g'ri yangilaymiz
+            // (serviceCharge, totalAmount hammasi aniq bo'ladi)
+            if (updatedOrder && updatedOrder.id) {
+                qc.setQueryData(['order', updatedOrder.id], updatedOrder);
+                const patchList = (old) =>
+                    Array.isArray(old) ? old.map(o => o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o) : old;
+                qc.setQueryData(['orders'], patchList);
+                qc.setQueryData(['orders', 'my-active'], patchList);
+            }
         },
         onError(err, variables, context) {
             qc.setQueryData(['orders'], context.previousOrders);
@@ -95,6 +105,15 @@ export function useDecreaseItem() {
             qc.setQueryData(['order', orderId], (old) => patchDetail(old));
 
             return { previousOrders, previousMy, previousDetail };
+        },
+        onSuccess(updatedOrder) {
+            if (updatedOrder && updatedOrder.id) {
+                qc.setQueryData(['order', updatedOrder.id], updatedOrder);
+                const patchList = (old) =>
+                    Array.isArray(old) ? old.map(o => o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o) : old;
+                qc.setQueryData(['orders'], patchList);
+                qc.setQueryData(['orders', 'my-active'], patchList);
+            }
         },
         onError(err, variables, context) {
             qc.setQueryData(['orders'], context.previousOrders);

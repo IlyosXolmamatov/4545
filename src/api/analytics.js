@@ -77,4 +77,10 @@ export const analyticsAPI = {
     const d = res.data;
     return Array.isArray(d) ? d : (Array.isArray(d?.topProducts) ? d.topProducts : []);
   },
+
+  /** POST /DailyClosing/Close — kunlik yopish */
+  dailyClose: async () => {
+    const res = await api.post('/DailyClosing/Close');
+    return res.data;
+  },
 };

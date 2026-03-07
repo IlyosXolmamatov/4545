@@ -6,10 +6,11 @@ import {
   ShoppingCart, Plus, Minus, Trash2,
   Loader2, Package, UtensilsCrossed, ShoppingBag,
   ArrowLeft, Search, X, ClipboardList, ChevronRight,
-  MapPin, Crown, Users, Clock, Percent,
+  MapPin, Crown, Users, Clock,
 } from 'lucide-react';
 
 import { orderAPI, OrderType } from '../api/orders';
+import { extractErrorMessage } from '../utils/errorHandler';
 import { productAPI, getImgUrl } from '../api/products';
 import { categoryAPI } from '../api/categories';
 import { tableAPI, TableStatus, TableType } from '../api/tables';
@@ -231,7 +232,6 @@ const POSTerminal = () => {
   const [cart, setCart]                         = useState([]);
   const [selectedTableId, setSelectedTableId]   = useState(null);
   const [orderType, setOrderType]               = useState(OrderType.DineIn);
-  const [serviceCharge, setServiceCharge]       = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   // URL dan orderId (OrdersPage → POS)
@@ -342,111 +342,46 @@ const POSTerminal = () => {
       toast.success("Buyurtma qabul qilindi!");
       clearAll();
     },
-    onError: (err) => {
-      const detail = err?.response?.data?.detail;
-      const title  = err?.response?.data?.title || err?.response?.data?.message;
-      toast.error(detail || title || "Buyurtma yuborishda xatolik");
-    },
+    onError: (err) => toast.error(extractErrorMessage(err, "Buyurtma yuborishda xatolik")),
   });
 
   // 2. Mavjud buyurtmaga mahsulot qo'shish (addMode)
-  // EF Core optimistic concurrency: har bir item uchun 6 marta retry,
-  // exponential backoff (400ms, 800ms, 1200ms, 1600ms, 2000ms).
-  // Itemlar orasida 200ms kutiladi.
+  // Barcha itemlarni bitta bulk request bilan yuborish — increase-multiple
   const addToExistingMutation = useMutation({
-    mutationFn: async () => {
-      const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-      const MAX_ATTEMPTS = 6;
-
-      for (let idx = 0; idx < cart.length; idx++) {
-        const item = cart[idx];
-        let lastErr = null;
-
-        for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-          try {
-            await orderAPI.increaseItem(editingOrderId, item.productId, item.count);
-            lastErr = null;
-            break;
-          } catch (err) {
-            lastErr = err;
-            // 400 = server validatsiya xatosi, retry foydasi yo'q
-            if (err?.response?.status === 400) break;
-            if (attempt < MAX_ATTEMPTS) {
-              await sleep(400 * attempt); // 400, 800, 1200, 1600, 2000ms
-            }
-          }
-        }
-
-        if (lastErr) throw lastErr;
-
-        // Itemlar orasida kichik pauza (keyingi item uchun DB versiyasi yangilansin)
-        if (idx < cart.length - 1) await sleep(200);
-      }
-    },
-    onSuccess: () => {
+    mutationFn: () =>
+      orderAPI.increaseMultiple(
+        editingOrderId,
+        cart.map(i => ({ productId: i.productId, count: i.count }))
+      ),
+    onSuccess: (updatedOrder) => {
       if (printQueueRef.current) {
         autoPrint(editingOrderId);
         printQueueRef.current = null;
       }
-      queryClient.invalidateQueries({ queryKey: ['order', editingOrderId] });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['orders', 'my-active'] });
+
+      // Backend qaytargan to'liq order bilan cache ni darhol yangilaymiz
+      // (serviceCharge, totalAmount, items hammasi to'g'ri bo'ladi)
+      if (updatedOrder && updatedOrder.id) {
+        queryClient.setQueryData(['order', updatedOrder.id], updatedOrder);
+        const patchList = (old) =>
+          Array.isArray(old) ? old.map(o => o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o) : old;
+        queryClient.setQueryData(['orders'], patchList);
+        queryClient.setQueryData(['orders', 'my-active'], patchList);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['order', editingOrderId] });
+        queryClient.invalidateQueries({ queryKey: ['orders'] });
+        queryClient.invalidateQueries({ queryKey: ['orders', 'my-active'] });
+      }
+
       queryClient.invalidateQueries({ queryKey: ['tables'] });
       toast.success("Mahsulotlar qo'shildi!");
       clearAll();
     },
-    onError: (err) => {
-      const status = err?.response?.status;
-      const data   = err?.response?.data;
-      const msg    = (typeof data === 'string' ? data : null)
-                  || data?.detail
-                  || data?.message
-                  || data?.title
-                  || err?.message
-                  || '';
-      if (status === 400) {
-        toast.error(msg || "Mahsulot qo'shib bo'lmadi (400)");
-      } else if (msg.toLowerCase().includes('concurren') || msg.toLowerCase().includes('affect')) {
-        toast.error("Server band, iltimos bir necha soniyadan keyin qayta urining.");
-      } else {
-        toast.error(msg || "Qo'shishda xatolik");
-      }
-    },
-  });
-
-  // 3. Vositachilik haqqini o'zgartirish (admin/kassa, addMode)
-  const serviceChargeMutation = useMutation({
-    mutationFn: ({ orderId, value }) => orderAPI.changeServiceCharge(orderId, value),
-    onMutate: ({ orderId, value }) => {
-      // Optimistic: UI ni darhol yangilaymiz
-      queryClient.setQueryData(['order', orderId], (old) =>
-        old ? { ...old, serviceCharge: value } : old
-      );
-    },
-    onSuccess: (_, { orderId }) => {
-      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-    },
-    onError: (err, { orderId, value }) => {
-      // Rollback
-      queryClient.setQueryData(['order', orderId], (old) =>
-        old ? { ...old, serviceCharge: !value } : old
-      );
-      const msg = err?.response?.data?.message || err?.response?.data || "Xatolik";
-      toast.error(typeof msg === 'string' ? msg : "Xizmat haqqini o'zgartirish mum'kin emas");
-    },
+    onError: (err) => toast.error(extractErrorMessage(err, "Mahsulot qo'shishda xatolik")),
   });
 
   // ── Cart helpers ──
   const addToCart = (product) => {
-    // Admin / kassa addMode da: orderdagi mavjud mahsulotni qo'shib bo'lmaydi
-    if (!waiter && addMode) {
-      const alreadyInOrder = editingOrder?.items?.some(i => i.productId === product.id);
-      if (alreadyInOrder) {
-        toast.error(`"${product.name}" mahsuloti buyurtmada band`);
-        return;
-      }
-    }
     setCart(prev => {
       const ex = prev.find(i => i.productId === product.id);
       if (ex) return prev.map(i => i.productId === product.id ? { ...i, count: i.count + 1 } : i);
@@ -471,7 +406,6 @@ const POSTerminal = () => {
     setCart([]);
     setSelectedTableId(null);
     setOrderType(OrderType.DineIn);
-    setServiceCharge(true);
     setSelectedCategory(null);
     setEditingOrderId(null);
     setAddMode(false);
@@ -529,7 +463,7 @@ const POSTerminal = () => {
       userId,
       ...(orderType === OrderType.DineIn && selectedTableId ? { tableId: selectedTableId } : {}),
       orderType: orderType === OrderType.DineIn ? 'DineIn' : 'TakeOut',
-      serviceCharge,
+      serviceCharge: true,
       items: cart.map(i => ({ productId: i.productId, count: i.count })),
     });
   };
@@ -666,27 +600,6 @@ const POSTerminal = () => {
                   )}
                 </div>
 
-                {/* Order type toggle — faqat kassa/admin, yangi order uchun */}
-                {!waiter && !addMode && (
-                  <div className="flex rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 text-xs shrink-0">
-                    <button
-                      onClick={() => setOrderType(OrderType.DineIn)}
-                      className={`px-2.5 sm:px-3 py-1.5 font-semibold flex items-center gap-1 transition-colors ${
-                        orderType === OrderType.DineIn ? 'bg-orange-500 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      <UtensilsCrossed size={12} /><span className="hidden sm:inline">Ichida</span>
-                    </button>
-                    <button
-                      onClick={() => { setOrderType(OrderType.TakeOut); setSelectedTableId(null); }}
-                      className={`px-2.5 sm:px-3 py-1.5 font-semibold flex items-center gap-1 transition-colors ${
-                        orderType === OrderType.TakeOut ? 'bg-orange-500 text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      <ShoppingBag size={12} /><span className="hidden sm:inline">Olib ketish</span>
-                    </button>
-                  </div>
-                )}
               </>
             )}
           </div>
@@ -1076,59 +989,19 @@ const POSTerminal = () => {
             </div>
           ) : (
             <div className="mb-4">
-              {serviceCharge && (
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-gray-400 dark:text-gray-500">Xizmat haqqi (15%):</span>
-                  <span className="text-rose-500 font-semibold">
-                    +{Math.round(totalAmount * 0.15).toLocaleString()} so'm
-                  </span>
-                </div>
-              )}
+              <div className="flex justify-between text-xs mb-1">
+                <span className="text-gray-400 dark:text-gray-500">Xizmat haqqi (15%):</span>
+                <span className="text-rose-500 font-semibold">
+                  +{Math.round(totalAmount * 0.15).toLocaleString()} so'm
+                </span>
+              </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Jami:</span>
                 <span className="text-2xl font-black text-gray-900 dark:text-white">
-                  {serviceCharge
-                    ? Math.round(totalAmount * 1.15).toLocaleString()
-                    : totalAmount.toLocaleString()} so'm
+                  {Math.round(totalAmount * 1.15).toLocaleString()} so'm
                 </span>
               </div>
             </div>
-          )}
-
-          {/* Xizmat haqqi toggle */}
-          {!waiter && !addMode && (
-            // Yangi order uchun: lokal state
-            <button
-              onClick={() => setServiceCharge(p => !p)}
-              className={`w-full mb-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-colors ${
-                serviceCharge
-                  ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400'
-                  : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              <Percent size={12} />
-              {serviceCharge ? "Xizmat haqqi: 15% (o'chirish)" : "Xizmat haqqi: yo'q (yoqish)"}
-            </button>
-          )}
-          {!waiter && addMode && editingOrder && (
-            // Mavjud order uchun: backend ga PATCH
-            <button
-              disabled={serviceChargeMutation.isPending}
-              onClick={() => serviceChargeMutation.mutate({
-                orderId: editingOrderId,
-                value: !(editingOrder.serviceCharge ?? true),
-              })}
-              className={`w-full mb-3 py-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 border transition-colors disabled:opacity-50 ${
-                (editingOrder.serviceCharge ?? true)
-                  ? 'bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-600 dark:text-rose-400'
-                  : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
-              }`}
-            >
-              <Percent size={12} />
-              {(editingOrder.serviceCharge ?? true)
-                ? "Xizmat haqqi: 15% (o'chirish)"
-                : "Xizmat haqqi: yo'q (yoqish)"}
-            </button>
           )}
 
           <div className="flex gap-2">

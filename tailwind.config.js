@@ -21,7 +21,7 @@ export default {
           800: '#7c2410',
           900: '#66200d',
         },
-        
+
         // 🟦 Status Colors
         'status-success': {
           light: '#dcfce7',
@@ -43,7 +43,7 @@ export default {
           DEFAULT: '#3b82f6',
           dark: '#1d4ed8',
         },
-        
+
         // Dark Mode Palette
         'dark-bg': {
           50: '#f8fafc',
@@ -55,14 +55,14 @@ export default {
           900: '#0f172a',
           950: '#020617',
         },
-        
+
         'dark-text': {
           primary: '#f8fafc',
           secondary: '#cbd5e1',
           tertiary: '#94a3b8',
         },
       },
-      
+
       backgroundColor: {
         'dark-primary': '#0f172a',
         'dark-secondary': '#1e293b',
@@ -71,19 +71,19 @@ export default {
         'light-secondary': '#f8fafc',
         'light-tertiary': '#f1f5f9',
       },
-      
+
       textColor: {
         'dark-primary': '#f8fafc',
         'dark-secondary': '#cbd5e1',
         'light-primary': '#0f172a',
         'light-secondary': '#475569',
       },
-      
+
       borderColor: {
         'dark-light': '#334155',
         'light-light': '#e2e8f0',
       },
-      
+
       boxShadow: {
         'dark-sm': '0 1px 2px rgba(0, 0, 0, 0.5)',
         'dark-md': '0 4px 6px rgba(0, 0, 0, 0.5)',
@@ -92,7 +92,7 @@ export default {
         'light-md': '0 4px 6px rgba(0, 0, 0, 0.1)',
         'light-lg': '0 10px 15px rgba(0, 0, 0, 0.1)',
       },
-      
+
       backgroundImage: {
         'gradient-primary': 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
         'gradient-secondary': 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',

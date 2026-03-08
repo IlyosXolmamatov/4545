@@ -24,7 +24,7 @@ import OrderDetailModal from '../components/OrderDetailModal';
 const STATUS_META = {
   1: { label: 'Tayyor',    bg: 'bg-green-100 dark:bg-green-900/30',  text: 'text-green-700 dark:text-green-400',  Icon: CheckCircle },
   2: { label: 'Bekor',     bg: 'bg-red-100 dark:bg-red-900/30',      text: 'text-red-700 dark:text-red-400',      Icon: XCircle     },
-  3: { label: "To'landi",  bg: 'bg-orange-100 dark:bg-orange-900/30',text: 'text-orange-700 dark:text-orange-400',Icon: Wallet      },
+  3: { label: "To'landi",  bg: 'bg-basand-100 dark:bg-basand-800/30',text: 'text-basand-600 dark:text-basand-300',Icon: Wallet      },
   0: { label: 'Bekor',     bg: 'bg-red-100 dark:bg-red-900/30',      text: 'text-red-700 dark:text-red-400',      Icon: XCircle     },
 };
 
@@ -59,15 +59,15 @@ function OrderCard({ order, onView, onEdit, onFinish, canEdit, canPrint, canFini
   const time   = formatTime(order.createdAt);
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col">
 
       {/* ── TOP: SKU + STATUS ── */}
       <div className="flex items-start justify-between px-4 pt-4 pb-2">
         <div>
-          <p className="text-base font-black text-gray-900 dark:text-white tracking-tight">
+          <p className="text-base font-black text-slate-900 dark:text-white tracking-tight">
             #{order.sku}
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-400 mt-0.5">
+          <p className="text-xs text-slate-400 dark:text-slate-400 mt-0.5">
             {order.orderType === 2
               ? <span className="flex items-center gap-1"><UtensilsCrossed size={11} /> Olib ketish</span>
               : order.tableNumber
@@ -82,43 +82,43 @@ function OrderCard({ order, onView, onEdit, onFinish, canEdit, canPrint, canFini
       </div>
 
       {/* ── DIVIDER ── */}
-      <div className="mx-4 border-t border-gray-100 dark:border-gray-800" />
+      <div className="mx-4 border-t border-slate-100 dark:border-slate-800" />
 
       {/* ── ITEMS ── */}
       <div className="px-4 py-3 flex-1 space-y-1">
         {shown.map((item, i) => (
           <div key={i} className="flex items-baseline justify-between gap-2">
-            <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
-              <span className="font-semibold text-gray-900 dark:text-white">{item.count}x</span>{' '}
+            <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
+              <span className="font-semibold text-slate-900 dark:text-white">{item.count}x</span>{' '}
               {item.productName}
             </span>
-            <span className="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap shrink-0">
+            <span className="text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0">
               {((item.priceAtTime ?? 0) * item.count).toLocaleString('ru-RU')} so'm
             </span>
           </div>
         ))}
         {extra > 0 && (
-          <p className="text-xs text-gray-400 dark:text-gray-500 pt-0.5">
+          <p className="text-xs text-slate-400 dark:text-slate-500 pt-0.5">
             +{extra} ta mahsulot
           </p>
         )}
         {items.length === 0 && (
-          <p className="text-xs text-gray-400 italic">Mahsulotlar yo'q</p>
+          <p className="text-xs text-slate-400 italic">Mahsulotlar yo'q</p>
         )}
       </div>
 
       {/* ── TOTAL ── */}
-      <div className="mx-4 border-t border-gray-100 dark:border-gray-800" />
+      <div className="mx-4 border-t border-slate-100 dark:border-slate-800" />
       <div className="flex items-center justify-between px-4 py-2.5">
-        <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">Jami:</span>
-        <span className="text-base font-black text-gray-900 dark:text-white">
+        <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">Jami:</span>
+        <span className="text-base font-black text-slate-900 dark:text-white">
           {(order.totalAmount ?? 0).toLocaleString('ru-RU')} so'm
         </span>
       </div>
 
       {/* ── FOOTER: TIME + WAITER ── */}
-      <div className="mx-4 border-t border-gray-100 dark:border-gray-800" />
-      <div className="flex items-center justify-between px-4 py-2 text-xs text-gray-400 dark:text-gray-400">
+      <div className="mx-4 border-t border-slate-100 dark:border-slate-800" />
+      <div className="flex items-center justify-between px-4 py-2 text-xs text-slate-400 dark:text-slate-400">
         {time
           ? <span className="flex items-center gap-1"><Clock size={11} /> {time}</span>
           : <span />}
@@ -147,9 +147,9 @@ function OrderCard({ order, onView, onEdit, onFinish, canEdit, canPrint, canFini
           <button
             onClick={() => onView(order)}
             className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl
-                       border border-gray-200 dark:border-gray-700 text-xs font-medium
-                       text-gray-700 dark:text-gray-300 min-w-0
-                       hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                       border border-slate-200 dark:border-slate-700 text-xs font-medium
+                       text-slate-700 dark:text-slate-300 min-w-0
+                       hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
           >
             <Eye size={13} className="shrink-0" />
             <span className="truncate">Ko'rish</span>
@@ -159,9 +159,9 @@ function OrderCard({ order, onView, onEdit, onFinish, canEdit, canPrint, canFini
             <button
               onClick={() => onEdit(order.id)}
               className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl
-                         bg-gray-900 dark:bg-white text-white dark:text-gray-900
+                         bg-slate-900 dark:bg-white text-white dark:text-slate-900
                          text-xs font-semibold min-w-0
-                         hover:bg-gray-700 dark:hover:bg-gray-100 transition-colors"
+                         hover:bg-slate-700 dark:hover:bg-slate-100 transition-colors"
             >
               <Pencil size={13} className="shrink-0" />
               <span className="truncate">Tahrir</span>
@@ -176,7 +176,7 @@ function OrderCard({ order, onView, onEdit, onFinish, canEdit, canPrint, canFini
               <button
                 onClick={() => orderAPI.printCashier(order.id).catch(() => {})}
                 className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl
-                           bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold
+                           bg-basand-400 hover:bg-basand-500 text-white text-xs font-semibold
                            min-w-0 transition-colors"
               >
                 <Printer size={13} className="shrink-0" />
@@ -309,13 +309,13 @@ export default function OrdersPage() {
   // ── RENDER ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="p-6 bg-gray-50 dark:bg-gray-950 min-h-screen">
+    <div className="p-6 bg-slate-50 dark:bg-slate-950 min-h-screen">
 
       {/* ── HEADER ── */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h1 className="text-xl font-black text-gray-900 dark:text-white">Buyurtmalar</h1>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-0.5">
+          <h1 className="text-xl font-black text-slate-900 dark:text-white">Buyurtmalar</h1>
+          <p className="text-sm text-slate-400 dark:text-slate-500 mt-0.5">
             {waiter ? 'Mening faol buyurtmalarim' : dateFilter === 'today' ? 'Bugungi buyurtmalar' : 'Barcha buyurtmalar'}
           </p>
         </div>
@@ -325,7 +325,7 @@ export default function OrdersPage() {
           {hasPermission('Order_Create') && (
             <button
               onClick={() => navigate('/pos')}
-              className="flex items-center gap-2 px-4 py-2.5 bg-orange-500 hover:bg-orange-600
+              className="flex items-center gap-2 px-4 py-2.5 bg-basand-400 hover:bg-basand-500
                          text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
             >
               <Plus size={16} />
@@ -337,13 +337,13 @@ export default function OrdersPage() {
 
       {/* ── SANA FILTRI — faqat admin/kassir uchun ── */}
       {!waiter && (
-        <div className="flex gap-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-1 w-fit mb-4">
+        <div className="flex gap-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-1 w-fit mb-4">
           <button
             onClick={() => setDateFilter('today')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               dateFilter === 'today'
-                ? 'bg-orange-500 text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                ? 'bg-basand-400 text-white shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             <CalendarDays size={14} />
@@ -353,8 +353,8 @@ export default function OrdersPage() {
             onClick={() => setDateFilter('all')}
             className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               dateFilter === 'all'
-                ? 'bg-orange-500 text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                ? 'bg-basand-400 text-white shadow-sm'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
             Hammasi
@@ -365,16 +365,16 @@ export default function OrdersPage() {
       {/* ── STATS ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Jami',           count: total,     color: 'text-gray-800 dark:text-gray-100'   },
+          { label: 'Jami',           count: total,     color: 'text-slate-800 dark:text-slate-100'   },
           { label: 'Tayyor',         count: preparing, color: 'text-green-600 dark:text-green-400' },
           { label: 'Bekor qilingan', count: cancelled, color: 'text-red-600 dark:text-red-400'     },
-          { label: "To'landi",       count: finished,  color: 'text-orange-600 dark:text-orange-400' },
+          { label: "To'landi",       count: finished,  color: 'text-basand-500 dark:text-basand-300' },
         ].map((stat) => (
           <div
             key={stat.label}
-            className="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 shadow-sm"
+            className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-100 dark:border-slate-700 shadow-sm"
           >
-            <p className="text-xs text-gray-400 dark:text-gray-500 font-medium truncate">{stat.label}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium truncate">{stat.label}</p>
             <p className={`text-3xl font-black mt-1 ${stat.color}`}>{stat.count}</p>
           </div>
         ))}
@@ -383,14 +383,14 @@ export default function OrdersPage() {
       {/* ── SEARCH + FILTER ── */}
       <div className="flex flex-wrap gap-2 mb-5">
         <div className="relative flex-1 min-w-48">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="SKU, ofitsant, stol, mahsulot..."
-            className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700
-                       bg-white dark:bg-gray-900 text-gray-900 dark:text-white
-                       focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-200"
+            className="w-full pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700
+                       bg-white dark:bg-slate-900 text-slate-900 dark:text-white
+                       focus:outline-none focus:border-basand-300 focus:ring-1 focus:ring-basand-200"
           />
         </div>
 
@@ -400,8 +400,8 @@ export default function OrdersPage() {
             onClick={() => setStatusFilter(f.value)}
             className={`px-3 py-2 rounded-xl text-xs font-medium transition-all ${
               statusFilter === f.value
-                ? 'bg-orange-500 text-white shadow-sm'
-                : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-orange-300'
+                ? 'bg-basand-400 text-white shadow-sm'
+                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-basand-300'
             }`}
           >
             {f.label}
@@ -413,12 +413,12 @@ export default function OrdersPage() {
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-64 bg-white dark:bg-gray-900 rounded-2xl animate-pulse border border-gray-100 dark:border-gray-800" />
+            <div key={i} className="h-64 bg-white dark:bg-slate-900 rounded-2xl animate-pulse border border-slate-100 dark:border-slate-800" />
           ))}
         </div>
 
       ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+        <div className="flex flex-col items-center justify-center py-24 text-slate-400">
           <ShoppingBag size={48} className="mb-3 opacity-30" />
           <p className="font-medium text-lg">Buyurtmalar yo'q</p>
         </div>

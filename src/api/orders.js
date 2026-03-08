@@ -39,9 +39,9 @@ const normalizeOrder = (o) => {
 };
 
 export const ORDER_STATUS_COLORS = {
-  1: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',    // Accepted
-  2: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',        // Cancelled
-  3: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300', // Finished
+  1: 'badge-info',     // Accepted - Blue
+  2: 'badge-error',    // Cancelled - Red
+  3: 'badge-success',  // Finished - Green
 };
 
 // Backward compatibility aliases

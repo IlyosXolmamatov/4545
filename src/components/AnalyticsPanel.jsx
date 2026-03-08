@@ -36,19 +36,19 @@ const StatCard = ({ icon: Icon, label, value, color, sub }) => (
       <Icon size={20} className={color.iconText} />
     </div>
     <div className="min-w-0">
-      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5">{label}</p>
+      <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-0.5">{label}</p>
       <p className={`text-xl font-bold truncate ${color.text}`}>{value}</p>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
     </div>
   </div>
 );
 
 // ── Section wrapper ────────────────────────────────────────────────────────────
 const Section = ({ title, sub, children }) => (
-  <div className="bg-white dark:bg-gray-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-gray-700">
+  <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-slate-100 dark:border-slate-700">
     <div className="mb-4">
-      <p className="text-base font-bold text-gray-900 dark:text-white">{title}</p>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      <p className="text-base font-bold text-slate-900 dark:text-white">{title}</p>
+      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
     </div>
     {children}
   </div>
@@ -56,7 +56,7 @@ const Section = ({ title, sub, children }) => (
 
 // ── Loading / error ────────────────────────────────────────────────────────────
 const LoadingBox = () => (
-  <div className="flex items-center justify-center gap-2 text-gray-400 py-10">
+  <div className="flex items-center justify-center gap-2 text-slate-400 py-10">
     <Loader2 size={20} className="animate-spin" />
     <span className="text-sm">Yuklanmoqda...</span>
   </div>
@@ -68,7 +68,7 @@ const ErrorBox = ({ msg = "Ma'lumot yuklanmadi" }) => (
   </div>
 );
 const EmptyBox = () => (
-  <p className="text-sm text-center text-gray-400 py-10">Ma'lumot yo'q</p>
+  <p className="text-sm text-center text-slate-400 py-10">Ma'lumot yo'q</p>
 );
 
 // ── MAIN ───────────────────────────────────────────────────────────────────────
@@ -120,15 +120,15 @@ export default function AnalyticsPanel() {
     <div className="mt-6 space-y-5">
 
       {/* ── PERIOD FILTER ── */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl px-5 py-4 shadow-sm border border-gray-100 dark:border-gray-700">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl px-5 py-4 shadow-sm border border-slate-100 dark:border-slate-700">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white">Analitika</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Analitika</h3>
           <PeriodFilter filter={filter} onChange={setFilter} />
         </div>
       </div>
 
       {!customReady ? (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-8 text-center text-sm text-gray-400 border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-center text-sm text-slate-400 border border-slate-100 dark:border-slate-700">
           Sanalarni tanlang va <span className="font-semibold">Qo'llash</span> bosing
         </div>
       ) : (

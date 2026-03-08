@@ -52,9 +52,9 @@ const TableCard = ({ table, onEdit, onDelete, canEdit, canDelete, isDark }) => {
       badge: 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30',
       label: "Bo'sh",
       dot: null,
-      cardBg: isDark ? 'bg-gray-900' : 'bg-white',
-      cardBorder: isDark ? 'border-gray-800 hover:border-emerald-500/50' : 'border-gray-100 hover:border-emerald-300',
-      number: isDark ? 'text-gray-100' : 'text-gray-800',
+      cardBg: isDark ? 'bg-slate-900' : 'bg-white',
+      cardBorder: isDark ? 'border-slate-800 hover:border-emerald-500/50' : 'border-slate-100 hover:border-emerald-300',
+      number: isDark ? 'text-slate-100' : 'text-slate-800',
     },
     [TableStatus.Occupied]: {
       badge: 'bg-rose-500/20 text-rose-400 border border-rose-500/30',
@@ -83,7 +83,7 @@ const TableCard = ({ table, onEdit, onDelete, canEdit, canDelete, isDark }) => {
 
       {/* Type badge — yuqori o'ng */}
       <div className={`absolute top-2.5 right-2.5 text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide ${
-        isDark ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'
+        isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-400'
       }`}>
         {table.tableType === TableType.Simple ? 'Ichkari' : table.tableType === TableType.Terrace ? 'Terasa' : 'VIP'}
       </div>
@@ -102,7 +102,7 @@ const TableCard = ({ table, onEdit, onDelete, canEdit, canDelete, isDark }) => {
 
       {/* STOL label */}
       <p className={`text-[10px] font-semibold uppercase tracking-widest mt-3 ${
-        isDark ? 'text-gray-400' : 'text-gray-500'
+        isDark ? 'text-slate-400' : 'text-slate-500'
       }`}>
         STOL
       </p>
@@ -122,15 +122,15 @@ const TableCard = ({ table, onEdit, onDelete, canEdit, canDelete, isDark }) => {
       {/* Capacity + Waiter */}
       <div className="flex items-center justify-between mt-3">
         <div className="flex items-center gap-1">
-          <Users size={11} className={isDark ? 'text-gray-400' : 'text-gray-500'} />
-          <span className={`text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+          <Users size={11} className={isDark ? 'text-slate-400' : 'text-slate-500'} />
+          <span className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             {capacity ? `${capacity} kishi` : '—'}
           </span>
         </div>
         {table.waiterName && (
           <div className="flex items-center gap-1">
-            <UserCircle size={11} className="text-orange-400" />
-            <span className="text-xs font-medium text-orange-400 truncate max-w-16">
+            <UserCircle size={11} className="text-basand-300" />
+            <span className="text-xs font-medium text-basand-300 truncate max-w-16">
               {table.waiterName}
             </span>
           </div>
@@ -140,7 +140,7 @@ const TableCard = ({ table, onEdit, onDelete, canEdit, canDelete, isDark }) => {
       {/* Active order SKU — band bo'lsa */}
       {table.tableStatus === TableStatus.Occupied && table.activeSku && (
         <div className={`mt-2 px-2 py-1 rounded-lg text-[10px] font-mono ${
-          isDark ? 'bg-gray-800 text-gray-500' : 'bg-gray-100 text-gray-400'
+          isDark ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-400'
         }`}>
           {table.activeSku}
         </div>
@@ -188,14 +188,14 @@ const TablesPage = () => {
 
   // ── Theme helper ──
   const theme = {
-    page: isDark ? 'bg-gray-950 min-h-screen' : 'bg-gray-50 min-h-screen',
-    card: isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100',
-    text: isDark ? 'text-gray-100' : 'text-gray-900',
-    subtext: isDark ? 'text-gray-400' : 'text-gray-500',
-    section: isDark ? 'text-gray-300' : 'text-gray-700',
-    filterBtn: isDark ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-white border-gray-200 text-gray-600',
-    filterActive: isDark ? 'bg-gray-100 text-gray-900' : 'bg-gray-900 text-white',
-    divider: isDark ? 'bg-gray-700' : 'bg-gray-200',
+    page: isDark ? 'bg-slate-950 min-h-screen' : 'bg-slate-50 min-h-screen',
+    card: isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100',
+    text: isDark ? 'text-slate-100' : 'text-slate-900',
+    subtext: isDark ? 'text-slate-400' : 'text-slate-500',
+    section: isDark ? 'text-slate-300' : 'text-slate-700',
+    filterBtn: isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-white border-slate-200 text-slate-600',
+    filterActive: isDark ? 'bg-slate-100 text-slate-900' : 'bg-slate-900 text-white',
+    divider: isDark ? 'bg-slate-700' : 'bg-slate-200',
   };
 
   // ── Queries ──
@@ -326,14 +326,14 @@ const TablesPage = () => {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[...Array(4)].map((_, i) => (
             <div key={i} className={`h-32 rounded-2xl animate-pulse ${
-              isDark ? 'bg-gray-800' : 'bg-gray-200'
+              isDark ? 'bg-slate-800' : 'bg-slate-200'
             }`} />
           ))}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[...Array(8)].map((_, i) => (
             <div key={i} className={`h-32 rounded-2xl animate-pulse ${
-              isDark ? 'bg-gray-800' : 'bg-gray-200'
+              isDark ? 'bg-slate-800' : 'bg-slate-200'
             }`} />
           ))}
         </div>
@@ -355,10 +355,10 @@ const TablesPage = () => {
         <div className="flex items-center gap-3">
           {/* Live indicator */}
           <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border ${
-            isDark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'
+            isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'
           }`}>
             <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
-              isFetching ? 'bg-orange-400' : 'bg-green-400'
+              isFetching ? 'bg-basand-300' : 'bg-green-400'
             }`} />
             <span className={`text-xs font-medium ${theme.subtext}`}>Live</span>
           </div>
@@ -370,8 +370,8 @@ const TablesPage = () => {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
                          transition-colors shadow-sm ${
                            isDark
-                             ? 'bg-white text-gray-900 hover:bg-gray-100'
-                             : 'bg-gray-900 text-white hover:bg-gray-700'
+                             ? 'bg-white text-slate-900 hover:bg-slate-100'
+                             : 'bg-slate-900 text-white hover:bg-slate-700'
                          }`}
             >
               <Plus size={16} />
@@ -384,7 +384,7 @@ const TablesPage = () => {
       {/* ── STATS CARDS ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         {[
-          { label: 'Jami', count: tables.length, color: isDark ? 'text-gray-100' : 'text-gray-800' },
+          { label: 'Jami', count: tables.length, color: isDark ? 'text-slate-100' : 'text-slate-800' },
           { label: "Bo'sh", count: freeCount, color: 'text-emerald-500' },
           { label: 'Band', count: occupiedCount, color: 'text-rose-500' },
           { label: 'Rezerv', count: reservedCount, color: 'text-amber-500' },
@@ -412,7 +412,7 @@ const TablesPage = () => {
                        border transition-all ${
                          typeFilter === f.value
                            ? theme.filterActive
-                           : theme.filterBtn + ' hover:border-orange-300'
+                           : theme.filterBtn + ' hover:border-basand-300'
                        }`}
           >
             {f.icon}
@@ -420,8 +420,8 @@ const TablesPage = () => {
             {f.value !== 'all' && (
               <span className={`ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
                 typeFilter === f.value
-                  ? isDark ? 'bg-gray-700 text-gray-200' : 'bg-white/20 text-white'
-                  : isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'
+                  ? isDark ? 'bg-slate-700 text-slate-200' : 'bg-white/20 text-white'
+                  : isDark ? 'bg-slate-700 text-slate-400' : 'bg-slate-100 text-slate-500'
               }`}>
                 {tables.filter(t => t.tableType === f.value).length}
               </span>
@@ -437,7 +437,7 @@ const TablesPage = () => {
             { label: 'Rezerv', status: TableStatus.Reserved, dot: 'bg-amber-400' },
           ].map(s => (
             <div key={s.status} className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs ${
-              isDark ? 'bg-gray-900' : 'bg-white border border-gray-100'
+              isDark ? 'bg-slate-900' : 'bg-white border border-slate-100'
             }`}>
               <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
               <span className={theme.subtext}>{s.label} — </span>
@@ -458,10 +458,10 @@ const TablesPage = () => {
           const config = TYPE_CONFIG.find(c => c.type === type);
           const Icon = config.icon;
           const iconBg = type === TableType.VIP
-            ? 'bg-gradient-to-br from-amber-400 to-orange-500'
+            ? 'bg-gradient-to-br from-amber-400 to-brand-400'
             : type === TableType.Terrace
             ? (isDark ? 'bg-emerald-800' : 'bg-emerald-600')
-            : (isDark ? 'bg-gray-700' : 'bg-gray-900');
+            : (isDark ? 'bg-slate-700' : 'bg-slate-900');
 
           return (
             <div key={type} className="mb-8">
@@ -509,12 +509,12 @@ const TablesPage = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className={`rounded-2xl w-full max-w-md shadow-2xl overflow-hidden ${
-            isDark ? 'bg-gray-900' : 'bg-white'
+            isDark ? 'bg-slate-900' : 'bg-white'
           }`}>
 
             {/* Header */}
             <div className={`flex items-center justify-between p-6 border-b ${
-              isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-100 bg-gray-50'
+              isDark ? 'border-slate-700 bg-slate-800/50' : 'border-slate-100 bg-slate-50'
             }`}>
               <h2 className={`text-lg font-bold ${theme.text}`}>
                 {isEditing ? '✏️ Stolni tahrirlash' : "➕ Yangi stol qo'shish"}
@@ -522,7 +522,7 @@ const TablesPage = () => {
               <button
                 onClick={closeModal}
                 className={`p-1.5 rounded-lg transition-colors ${
-                  isDark ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'
+                  isDark ? 'hover:bg-slate-700 text-slate-400 hover:text-white' : 'hover:bg-slate-100 text-slate-500 hover:text-slate-900'
                 }`}
               >
                 <X size={20} />
@@ -545,10 +545,10 @@ const TablesPage = () => {
                     onChange={handleInput}
                     min={1}
                     placeholder="5"
-                    className={`w-full px-3 py-2.5 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all ${
+                    className={`w-full px-3 py-2.5 border rounded-xl focus:ring-2 focus:ring-basand-400 focus:border-transparent outline-none transition-all ${
                       isDark
-                        ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500'
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                        ? 'bg-slate-800 border-slate-600 text-white placeholder-gray-500'
+                        : 'bg-white border-slate-300 text-slate-900 placeholder-gray-400'
                     }`}
                     required
                   />
@@ -565,10 +565,10 @@ const TablesPage = () => {
                     min={1}
                     max={50}
                     placeholder="4"
-                    className={`w-full px-3 py-2.5 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all ${
+                    className={`w-full px-3 py-2.5 border rounded-xl focus:ring-2 focus:ring-basand-400 focus:border-transparent outline-none transition-all ${
                       isDark
-                        ? 'bg-gray-800 border-gray-600 text-white placeholder-gray-500'
-                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                        ? 'bg-slate-800 border-slate-600 text-white placeholder-gray-500'
+                        : 'bg-white border-slate-300 text-slate-900 placeholder-gray-400'
                     }`}
                     required
                   />
@@ -591,11 +591,11 @@ const TablesPage = () => {
                       className={`py-2.5 px-3 rounded-xl text-sm font-medium border-2 transition-all ${
                         parseInt(formData.tableType) === type
                           ? (isDark
-                              ? 'bg-orange-600 text-white border-orange-600 shadow-lg'
-                              : 'bg-orange-500 text-white border-orange-500 shadow-lg')
+                              ? 'bg-basand-500 text-white border-basand-500 shadow-lg'
+                              : 'bg-basand-400 text-white border-basand-400 shadow-lg')
                           : (isDark
-                              ? 'bg-gray-800 text-gray-300 border-gray-600 hover:border-gray-500'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300')
+                              ? 'bg-slate-800 text-slate-300 border-slate-600 hover:border-slate-500'
+                              : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300')
                       }`}
                     >
                       {label}
@@ -613,7 +613,7 @@ const TablesPage = () => {
                   {[
                     { val: TableStatus.Free,     label: "Bo'sh",  cls: 'bg-emerald-500 border-emerald-500 text-white hover:bg-emerald-600' },
                     { val: TableStatus.Occupied, label: 'Band',   cls: 'bg-rose-500 border-rose-500 text-white hover:bg-rose-600'       },
-                    { val: TableStatus.Reserved, label: 'Rezerv', cls: 'bg-amber-400 border-amber-400 text-gray-900 hover:bg-amber-500'  },
+                    { val: TableStatus.Reserved, label: 'Rezerv', cls: 'bg-amber-400 border-amber-400 text-slate-900 hover:bg-amber-500'  },
                   ].map(({ val, label, cls }) => (
                     <button
                       key={val}
@@ -623,8 +623,8 @@ const TablesPage = () => {
                         parseInt(formData.tableStatus) === val
                           ? cls
                           : (isDark
-                              ? 'bg-gray-800 text-gray-300 border-gray-600 hover:border-gray-500'
-                              : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300')
+                              ? 'bg-slate-800 text-slate-300 border-slate-600 hover:border-slate-500'
+                              : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300')
                       }`}
                     >
                       {label}
@@ -635,15 +635,15 @@ const TablesPage = () => {
 
               {/* Buttons */}
               <div className={`flex justify-end gap-3 pt-4 border-t ${
-                isDark ? 'border-gray-700' : 'border-gray-100'
+                isDark ? 'border-slate-700' : 'border-slate-100'
               }`}>
                 <button
                   type="button"
                   onClick={closeModal}
                   className={`px-5 py-2.5 rounded-xl font-medium transition-colors ${
                     isDark
-                      ? 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
                   Bekor
@@ -653,8 +653,8 @@ const TablesPage = () => {
                   disabled={isMutating}
                   className={`px-6 py-2.5 rounded-xl font-semibold disabled:opacity-50 flex items-center gap-2 transition-all shadow-sm ${
                     isDark
-                      ? 'bg-orange-600 text-white hover:bg-orange-700 disabled:bg-gray-700'
-                      : 'bg-orange-500 text-white hover:bg-orange-600 disabled:bg-gray-400'
+                      ? 'bg-basand-500 text-white hover:bg-basand-600 disabled:bg-slate-700'
+                      : 'bg-basand-400 text-white hover:bg-basand-500 disabled:bg-slate-400'
                   }`}
                 >
                   {isMutating && <Loader2 size={16} className="animate-spin" />}

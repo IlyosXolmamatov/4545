@@ -35,7 +35,7 @@ const COLORS = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#f9
 
 // ─── Loading / Error ──────────────────────────────────────────────────────────
 const Loading = () => (
-  <div className="flex items-center justify-center gap-2 text-gray-400 py-12">
+  <div className="flex items-center justify-center gap-2 text-slate-400 py-12">
     <Loader2 size={20} className="animate-spin" />
     <span className="text-sm">Yuklanmoqda...</span>
   </div>
@@ -55,12 +55,12 @@ const ErrorBox = ({ error }) => (
   </div>
 );
 const Empty = () => (
-  <p className="text-sm text-center text-gray-400 py-12">Ma'lumot yo'q</p>
+  <p className="text-sm text-center text-slate-400 py-12">Ma'lumot yo'q</p>
 );
 
 // ─── Section ─────────────────────────────────────────────────────────────────
 const Section = ({ title, sub, icon: Icon, children }) => (
-  <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+  <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
     <div className="flex items-center gap-3 mb-5">
       {Icon && (
         <div className="w-9 h-9 rounded-xl bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center shrink-0">
@@ -68,8 +68,8 @@ const Section = ({ title, sub, icon: Icon, children }) => (
         </div>
       )}
       <div>
-        <h3 className="text-base font-bold text-gray-900 dark:text-white">{title}</h3>
-        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+        <h3 className="text-base font-bold text-slate-900 dark:text-white">{title}</h3>
+        {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
       </div>
     </div>
     {children}
@@ -143,39 +143,39 @@ function OrdersSection({ filter }) {
   return (
     <Section title="Buyurtmalar" sub={data ? fmtDateRange(data.startDate, data.endDate) : ''} icon={ShoppingCart}>
       {isLoading ? <Loading /> : isError ? <ErrorBox error={error} /> : (
-        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Tur</th>
-                <th className="text-center px-3 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Soni</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Asosiy summa</th>
+              <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Tur</th>
+                <th className="text-center px-3 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Soni</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Asosiy summa</th>
                 <th className="text-right px-4 py-3 text-xs font-semibold text-rose-400 uppercase tracking-wide">Xizmat haqqi</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Jami</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Jami</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
 
               {/* ── Ichida ── */}
-              <tr className="bg-white dark:bg-gray-900 font-semibold">
-                <td className="px-4 py-3 text-gray-800 dark:text-gray-200">🍴 Ichida (Dine In)</td>
+              <tr className="bg-white dark:bg-slate-900 font-semibold">
+                <td className="px-4 py-3 text-slate-800 dark:text-slate-200">🍴 Ichida (Dine In)</td>
                 <td className="px-3 py-3 text-center">
                   <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
                     {fmt(stats.dineIn.count)} ta
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{fmtMoney(stats.dineIn.base)}</td>
+                <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{fmtMoney(stats.dineIn.base)}</td>
                 <td className="px-4 py-3 text-right text-rose-500 font-semibold">
                   {stats.dineIn.charge > 0 ? `+${fmtMoney(stats.dineIn.charge)}` : '—'}
                 </td>
-                <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">{fmtMoney(stats.dineIn.total)}</td>
+                <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white">{fmtMoney(stats.dineIn.total)}</td>
               </tr>
 
               {/* ── Ichida → Xizmat haqqili (sub-row) ── */}
               <tr className="bg-violet-50/50 dark:bg-violet-950/20 text-xs">
-                <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400">
+                <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">
                   <span className="flex items-center gap-2">
-                    <span className="w-3 h-px bg-gray-300 dark:bg-gray-600 inline-block" />
+                    <span className="w-3 h-px bg-slate-300 dark:bg-slate-600 inline-block" />
                     Xizmat haqqili
                   </span>
                 </td>
@@ -184,42 +184,42 @@ function OrdersSection({ filter }) {
                     {fmt(stats.dineInWith.count)} ta
                   </span>
                 </td>
-                <td className="px-4 py-2.5 text-right text-gray-500 dark:text-gray-400">{fmtMoney(stats.dineInWith.base)}</td>
+                <td className="px-4 py-2.5 text-right text-slate-500 dark:text-slate-400">{fmtMoney(stats.dineInWith.base)}</td>
                 <td className="px-4 py-2.5 text-right text-rose-500 font-semibold">
                   {stats.dineInWith.charge > 0 ? `+${fmtMoney(stats.dineInWith.charge)}` : '—'}
                 </td>
-                <td className="px-4 py-2.5 text-right font-semibold text-gray-700 dark:text-gray-300">{fmtMoney(stats.dineInWith.total)}</td>
+                <td className="px-4 py-2.5 text-right font-semibold text-slate-700 dark:text-slate-300">{fmtMoney(stats.dineInWith.total)}</td>
               </tr>
 
               {/* ── Ichida → Xizmat haqqisiz (sub-row) ── */}
-              <tr className="bg-gray-50/50 dark:bg-gray-800/30 text-xs">
-                <td className="px-4 py-2.5 text-gray-500 dark:text-gray-400">
+              <tr className="bg-slate-50/50 dark:bg-slate-800/30 text-xs">
+                <td className="px-4 py-2.5 text-slate-500 dark:text-slate-400">
                   <span className="flex items-center gap-2">
-                    <span className="w-3 h-px bg-gray-300 dark:bg-gray-600 inline-block" />
+                    <span className="w-3 h-px bg-slate-300 dark:bg-slate-600 inline-block" />
                     Xizmat haqqisiz
                   </span>
                 </td>
                 <td className="px-3 py-2.5 text-center">
-                  <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                  <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400">
                     {fmt(stats.dineInWithout.count)} ta
                   </span>
                 </td>
-                <td className="px-4 py-2.5 text-right text-gray-500 dark:text-gray-400">{fmtMoney(stats.dineInWithout.base)}</td>
-                <td className="px-4 py-2.5 text-right text-gray-400">—</td>
-                <td className="px-4 py-2.5 text-right font-semibold text-gray-700 dark:text-gray-300">{fmtMoney(stats.dineInWithout.total)}</td>
+                <td className="px-4 py-2.5 text-right text-slate-500 dark:text-slate-400">{fmtMoney(stats.dineInWithout.base)}</td>
+                <td className="px-4 py-2.5 text-right text-slate-400">—</td>
+                <td className="px-4 py-2.5 text-right font-semibold text-slate-700 dark:text-slate-300">{fmtMoney(stats.dineInWithout.total)}</td>
               </tr>
 
               {/* ── Olib ketish ── */}
-              <tr className="bg-white dark:bg-gray-900 font-semibold">
-                <td className="px-4 py-3 text-gray-800 dark:text-gray-200">🛍 Olib ketish (Take Out)</td>
+              <tr className="bg-white dark:bg-slate-900 font-semibold">
+                <td className="px-4 py-3 text-slate-800 dark:text-slate-200">🛍 Olib ketish (Take Out)</td>
                 <td className="px-3 py-3 text-center">
-                  <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
+                  <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-basand-100 text-basand-600 dark:bg-basand-800/40 dark:text-basand-300">
                     {fmt(stats.takeOut.count)} ta
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">{fmtMoney(stats.takeOut.base)}</td>
-                <td className="px-4 py-3 text-right text-gray-400">—</td>
-                <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">{fmtMoney(stats.takeOut.total)}</td>
+                <td className="px-4 py-3 text-right text-slate-700 dark:text-slate-300">{fmtMoney(stats.takeOut.base)}</td>
+                <td className="px-4 py-3 text-right text-slate-400">—</td>
+                <td className="px-4 py-3 text-right font-bold text-slate-900 dark:text-white">{fmtMoney(stats.takeOut.total)}</td>
               </tr>
 
               {/* ── Xizmat haqqi jami ── */}
@@ -258,20 +258,20 @@ const WaiterTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload;
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl p-3 shadow-xl text-sm min-w-[180px]">
-      <p className="font-bold text-gray-900 dark:text-white mb-2 border-b border-gray-100 dark:border-gray-700 pb-1.5">{label}</p>
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-3 shadow-xl text-sm min-w-[180px]">
+      <p className="font-bold text-slate-900 dark:text-white mb-2 border-b border-slate-100 dark:border-slate-700 pb-1.5">{label}</p>
       <div className="space-y-1">
         <div className="flex justify-between gap-4">
-          <span className="text-gray-500">Buyurtmalar:</span>
+          <span className="text-slate-500">Buyurtmalar:</span>
           <span className="font-semibold text-indigo-600 dark:text-indigo-400">{fmt(d?.Buyurtmalar)}</span>
         </div>
         <div className="flex justify-between gap-4">
-          <span className="text-gray-500">Daromad:</span>
+          <span className="text-slate-500">Daromad:</span>
           <span className="font-semibold text-emerald-600 dark:text-emerald-400">{fmtMoney(d?.Daromad)}</span>
         </div>
         {d?.rank && (
           <div className="flex justify-between gap-4">
-            <span className="text-gray-500">Reyting:</span>
+            <span className="text-slate-500">Reyting:</span>
             <span className="font-semibold text-amber-600">#{d.rank}</span>
           </div>
         )}
@@ -308,7 +308,7 @@ function WaitersSection({ filter }) {
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
               metric === m.id
                 ? 'bg-indigo-600 text-white border-transparent'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-transparent hover:border-indigo-300'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent hover:border-indigo-300'
             }`}
           >
             {m.label}
@@ -347,29 +347,29 @@ const TableTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   const d = payload[0]?.payload;
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl p-3 shadow-xl text-sm min-w-[200px]">
-      <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-gray-100 dark:border-gray-700">
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-3 shadow-xl text-sm min-w-[200px]">
+      <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-700">
         <div className="w-6 h-6 rounded-lg bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
           <Table2 size={12} className="text-violet-600 dark:text-violet-400" />
         </div>
-        <p className="font-bold text-gray-900 dark:text-white">Stol #{label}</p>
+        <p className="font-bold text-slate-900 dark:text-white">Stol #{label}</p>
       </div>
       <div className="space-y-1.5">
         <div className="flex justify-between gap-6">
-          <span className="text-gray-500 dark:text-gray-400">Buyurtmalar:</span>
+          <span className="text-slate-500 dark:text-slate-400">Buyurtmalar:</span>
           <span className="font-semibold text-indigo-600 dark:text-indigo-400">{fmt(d?.totalOrders)}</span>
         </div>
         <div className="flex justify-between gap-6">
-          <span className="text-gray-500 dark:text-gray-400">Daromad:</span>
+          <span className="text-slate-500 dark:text-slate-400">Daromad:</span>
           <span className="font-semibold text-emerald-600 dark:text-emerald-400">{fmtMoney(d?.totalRevenue)}</span>
         </div>
         <div className="flex justify-between gap-6">
-          <span className="text-gray-500 dark:text-gray-400">Band bo'lish:</span>
+          <span className="text-slate-500 dark:text-slate-400">Band bo'lish:</span>
           <span className="font-semibold text-amber-600 dark:text-amber-400">{fmtPct(d?.occupancyRate)}</span>
         </div>
         <div className="flex justify-between gap-6">
-          <span className="text-gray-500 dark:text-gray-400">O'rt. vaqt:</span>
-          <span className="font-semibold text-gray-700 dark:text-gray-300">{fmtDur(d?.averageOccupancyDuration)}</span>
+          <span className="text-slate-500 dark:text-slate-400">O'rt. vaqt:</span>
+          <span className="font-semibold text-slate-700 dark:text-slate-300">{fmtDur(d?.averageOccupancyDuration)}</span>
         </div>
       </div>
     </div>
@@ -418,7 +418,7 @@ function TablesSection({ filter }) {
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
               metric === m.id
                 ? 'bg-violet-600 text-white border-transparent'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-transparent hover:border-violet-300'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent hover:border-violet-300'
             }`}
           >
             {m.label}
@@ -477,24 +477,24 @@ const PeakTooltip = ({ active, payload }) => {
   const next = h === 23 ? 0 : (h + 1);
   const timeLabel = `${String(h).padStart(2,'0')}:00 – ${String(next).padStart(2,'0')}:00`;
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl p-3 shadow-xl text-sm min-w-[200px]">
-      <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-gray-100 dark:border-gray-700">
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-3 shadow-xl text-sm min-w-[200px]">
+      <div className="flex items-center gap-2 mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-700">
         <div className="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
           <Zap size={12} className="text-amber-500" />
         </div>
-        <p className="font-bold text-gray-900 dark:text-white">{timeLabel}</p>
+        <p className="font-bold text-slate-900 dark:text-white">{timeLabel}</p>
       </div>
       <div className="space-y-1.5">
         <div className="flex justify-between gap-6">
-          <span className="text-gray-500 dark:text-gray-400">Buyurtmalar:</span>
+          <span className="text-slate-500 dark:text-slate-400">Buyurtmalar:</span>
           <span className="font-semibold text-indigo-600 dark:text-indigo-400">{fmt(d?.totalOrders)}</span>
         </div>
         <div className="flex justify-between gap-6">
-          <span className="text-gray-500 dark:text-gray-400">Daromad:</span>
+          <span className="text-slate-500 dark:text-slate-400">Daromad:</span>
           <span className="font-semibold text-emerald-600 dark:text-emerald-400">{fmtMoney(d?.totalRevenue)}</span>
         </div>
         <div className="flex justify-between gap-6">
-          <span className="text-gray-500 dark:text-gray-400">Mijozlar:</span>
+          <span className="text-slate-500 dark:text-slate-400">Mijozlar:</span>
           <span className="font-semibold text-violet-600 dark:text-violet-400">{fmt(d?.uniqueCustomers)}</span>
         </div>
       </div>
@@ -628,18 +628,18 @@ export default function AnalyticsPage() {
   const customReady = filter.period !== 'Custom' || (!!filter.startDate && !!filter.endDate);
 
   return (
-    <div className="p-4 sm:p-8 bg-gray-50 dark:bg-gray-950 min-h-screen">
+    <div className="p-4 sm:p-8 bg-slate-50 dark:bg-slate-950 min-h-screen">
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analitika</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Restoran to'liq statistikasi</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Analitika</h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Restoran to'liq statistikasi</p>
       </div>
 
       {/* Period Filter */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl px-5 py-4 shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl px-5 py-4 shadow-sm border border-slate-100 dark:border-slate-700 mb-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Davr tanlash</p>
+          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">Davr tanlash</p>
           <PeriodFilter filter={filter} onChange={setFilter} />
         </div>
       </div>
@@ -653,7 +653,7 @@ export default function AnalyticsPage() {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 activeTab === tab.id
                   ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-indigo-300 dark:hover:border-indigo-600'
+                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600'
               }`}
             >
               <Icon size={15} />
@@ -665,7 +665,7 @@ export default function AnalyticsPage() {
 
       {/* Content */}
       {!customReady ? (
-        <div className="bg-white dark:bg-gray-900 rounded-2xl p-12 text-center text-gray-400 border border-gray-100 dark:border-gray-700">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center text-slate-400 border border-slate-100 dark:border-slate-700">
           Sanalarni tanlang va <span className="font-semibold text-indigo-500">Qo'llash</span> bosing
         </div>
       ) : (

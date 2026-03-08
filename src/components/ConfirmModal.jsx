@@ -27,33 +27,33 @@ const ConfirmModal = ({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
 
         {/* Header */}
         <div className="flex items-start justify-between p-5 pb-0">
           <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0
-            ${danger ? 'bg-red-100 dark:bg-red-900/30' : 'bg-orange-100 dark:bg-orange-900/30'}`}>
+            ${danger ? 'bg-red-100 dark:bg-red-900/30' : 'bg-basand-100 dark:bg-basand-800/30'}`}>
             <AlertTriangle
               size={20}
-              className={danger ? 'text-red-600 dark:text-red-400' : 'text-orange-600 dark:text-orange-400'}
+              className={danger ? 'text-red-600 dark:text-red-400' : 'text-basand-500 dark:text-basand-300'}
             />
           </div>
           <button
             onClick={onCancel}
-            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
           >
-            <X size={16} className="text-gray-400" />
+            <X size={16} className="text-slate-400" />
           </button>
         </div>
 
         {/* Body */}
         <div className="px-5 pt-3 pb-5">
           {title && (
-            <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">
               {title}
             </h3>
           )}
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             {message}
           </p>
         </div>
@@ -63,8 +63,8 @@ const ConfirmModal = ({
           <button
             onClick={onCancel}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold
-                       bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700
-                       text-gray-700 dark:text-gray-300 transition-colors"
+                       bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700
+                       text-slate-700 dark:text-slate-300 transition-colors"
           >
             {cancelText}
           </button>
@@ -73,7 +73,7 @@ const ConfirmModal = ({
             className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-colors
               ${danger
                 ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-200 dark:shadow-red-900/30'
-                : 'bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-200 dark:shadow-orange-900/30'
+                : 'bg-basand-400 hover:bg-basand-500 shadow-lg shadow-brand-200 dark:shadow-brand-800/30'
               }`}
           >
             {confirmText}

@@ -6,7 +6,12 @@
       "Bash(npm install @microsoft/signalr --save)",
       "Bash(powershell -Command \"Compress-Archive -Path dist\\\\* -DestinationPath publish.zip -Force\")",
       "Bash(powershell -Command \"\\(Get-Item publish.zip\\).Length / 1KB\")",
-      "Bash(powershell -Command \"Compress-Archive -Path ''dist\\\\*'' -DestinationPath ''publish.zip'' -Force\")"
+      "Bash(powershell -Command \"Compress-Archive -Path ''dist\\\\*'' -DestinationPath ''publish.zip'' -Force\")",
+      "Bash(xargs sed -i -e 's/orange-50\\\\b/brand-50/g' -e 's/orange-100\\\\b/brand-100/g' -e 's/orange-200\\\\b/brand-200/g' -e 's/orange-300\\\\b/brand-300/g' -e 's/orange-400\\\\b/brand-300/g' -e 's/orange-500\\\\b/brand-400/g' -e 's/orange-600\\\\b/brand-500/g' -e 's/orange-700\\\\b/brand-600/g' -e 's/orange-800\\\\b/brand-700/g' -e 's/orange-900\\\\b/brand-800/g')",
+      "Bash(powershell -Command \"Set-Location ''C:\\\\Users\\\\HP\\\\Desktop\\\\4545''; Get-ChildItem -Path ''src'' -Recurse -Include ''*.jsx'',''*.js'',''*.css'',''*.ts'',''*.tsx'' | ForEach-Object { $content = Get-Content -Path $_.FullName -Raw; $updated = $content -replace ''lazzat'', ''basand''; Set-Content -Path $_.FullName -Value $updated -NoNewline }\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\HP\\\\Desktop\\\\4545\\\\fix_lazzat.ps1\")",
+      "Bash(powershell -Command \"Set-Location ''C:\\\\Users\\\\HP\\\\Desktop\\\\4545''; $content = Get-Content -Path ''src\\\\index.css'' -Raw; $updated = $content -replace ''lazzat'', ''basand''; [System.IO.File]::WriteAllText\\(''C:\\\\Users\\\\HP\\\\Desktop\\\\4545\\\\src\\\\index.css'', $updated\\)\")",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\HP\\\\Desktop\\\\4545\\\\fix_css.ps1\")"
     ]
   }
 }

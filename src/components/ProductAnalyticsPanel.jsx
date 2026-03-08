@@ -37,8 +37,8 @@ const TABS = [
 function MoneyTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 shadow-lg text-sm">
-      <p className="font-semibold text-gray-900 dark:text-white mb-1">{label}</p>
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 shadow-lg text-sm">
+      <p className="font-semibold text-slate-900 dark:text-white mb-1">{label}</p>
       {payload.map((p) => (
         <p key={p.dataKey} style={{ color: p.color }}>{p.name}: {fmtMoney(p.value)}</p>
       ))}
@@ -49,8 +49,8 @@ function MoneyTooltip({ active, payload, label }) {
 function CountTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl px-3 py-2 shadow-lg text-sm">
-      <p className="font-semibold text-gray-900 dark:text-white mb-1">{label}</p>
+    <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 shadow-lg text-sm">
+      <p className="font-semibold text-slate-900 dark:text-white mb-1">{label}</p>
       {payload.map((p) => (
         <p key={p.dataKey} style={{ color: p.color }}>{p.name}: {fmtNum(p.value)}</p>
       ))}
@@ -162,7 +162,7 @@ function ShareChart({ data }) {
             {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
           </Pie>
           <Tooltip formatter={(value, name) => [fmtMoney(value) + ` (${total ? ((value / total) * 100).toFixed(1) : 0}%)`, name]} />
-          <Legend formatter={(value) => <span className="text-gray-700 dark:text-gray-300 text-xs">{value}</span>} />
+          <Legend formatter={(value) => <span className="text-slate-700 dark:text-slate-300 text-xs">{value}</span>} />
         </PieChart>
       </ResponsiveContainer>
     </div>
@@ -214,7 +214,7 @@ function DataTable({ data }) {
   };
 
   const SortIcon = ({ col }) => {
-    if (sortKey !== col) return <ChevronUp className="w-3 h-3 text-gray-300 dark:text-gray-600" />;
+    if (sortKey !== col) return <ChevronUp className="w-3 h-3 text-slate-300 dark:text-slate-600" />;
     return sortDir === 'asc'
       ? <ChevronUp className="w-3 h-3 text-indigo-500" />
       : <ChevronDown className="w-3 h-3 text-indigo-500" />;
@@ -226,22 +226,22 @@ function DataTable({ data }) {
         <input
           type="text" placeholder="Mahsulot qidirish..." value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="flex-1 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="flex-1 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
         />
         <button
           onClick={exportCSV}
-          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
         >
           <Download className="w-4 h-4" /> CSV
         </button>
       </div>
-      <div className="overflow-x-auto rounded-xl border border-gray-100 dark:border-gray-700">
+      <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-700">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-50 dark:bg-gray-800">
+            <tr className="bg-slate-50 dark:bg-slate-800">
               {columns.map((col) => (
                 <th key={col.key} onClick={() => toggleSort(col.key)}
-                  className="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-400 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 select-none whitespace-nowrap">
+                  className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-400 cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 select-none whitespace-nowrap">
                   <span className="flex items-center gap-1">{col.label}<SortIcon col={col.key} /></span>
                 </th>
               ))}
@@ -249,19 +249,19 @@ function DataTable({ data }) {
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {rows.length === 0 ? (
-              <tr><td colSpan={4} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">Ma'lumot topilmadi</td></tr>
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-400 dark:text-slate-500">Ma'lumot topilmadi</td></tr>
             ) : rows.map((r, i) => (
               <tr key={i} className="hover:bg-indigo-50/40 dark:hover:bg-indigo-900/10 transition-colors">
-                <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{nameOf(r)}</td>
-                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{fmtMoney(val(r, 'totalRevenue', 'revenue', 'count'))}</td>
-                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{fmtNum(val(r, 'totalQuantitySold', 'count'))}</td>
-                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{fmtMoney(val(r, 'averagePrice', 'price'))}</td>
+                <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{nameOf(r)}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{fmtMoney(val(r, 'totalRevenue', 'revenue', 'count'))}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{fmtNum(val(r, 'totalQuantitySold', 'count'))}</td>
+                <td className="px-4 py-3 text-slate-700 dark:text-slate-300">{fmtMoney(val(r, 'averagePrice', 'price'))}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 text-right">{rows.length} ta mahsulot</p>
+      <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 text-right">{rows.length} ta mahsulot</p>
     </div>
   );
 }
@@ -281,12 +281,12 @@ export default function ProductAnalyticsPanel() {
   });
 
   return (
-    <div className="mt-6 bg-white dark:bg-gray-900 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
+    <div className="mt-6 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm border border-slate-100 dark:border-slate-700">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Mahsulot Analitikasi</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Daromad, sotilgan miqdor va narx statistikasi</p>
+          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Mahsulot Analitikasi</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Daromad, sotilgan miqdor va narx statistikasi</p>
         </div>
         <PeriodFilter filter={filter} onChange={setFilter} />
       </div>
@@ -301,7 +301,7 @@ export default function ProductAnalyticsPanel() {
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                 active
                   ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}>
               <Icon className="w-4 h-4" />{tab.label}
             </button>
@@ -311,11 +311,11 @@ export default function ProductAnalyticsPanel() {
 
       {/* Content */}
       {!customReady ? (
-        <div className="flex items-center justify-center h-48 text-gray-400 dark:text-gray-500 text-sm">
+        <div className="flex items-center justify-center h-48 text-slate-400 dark:text-slate-500 text-sm">
           Boshlanish va tugash sanasini tanlang, so'ng Qo'llash bosing
         </div>
       ) : isLoading ? (
-        <div className="flex items-center justify-center h-48 text-gray-400 dark:text-gray-500 text-sm">
+        <div className="flex items-center justify-center h-48 text-slate-400 dark:text-slate-500 text-sm">
           Yuklanmoqda...
         </div>
       ) : isError ? (
@@ -323,7 +323,7 @@ export default function ProductAnalyticsPanel() {
           Ma'lumotlarni yuklashda xatolik
         </div>
       ) : !data || data.length === 0 ? (
-        <div className="flex items-center justify-center h-48 text-gray-400 dark:text-gray-500 text-sm">
+        <div className="flex items-center justify-center h-48 text-slate-400 dark:text-slate-500 text-sm">
           Hozircha ma'lumot yo'q
         </div>
       ) : (

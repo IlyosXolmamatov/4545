@@ -22,7 +22,7 @@ import ConfirmModal from './ConfirmModal';
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 const StatusBadge = ({ status }) => (
-  <span className={`px-3 py-1 rounded-full text-xs font-bold ${ORDER_STATUS_STYLES[status] ?? 'bg-gray-100 text-gray-600'}`}>
+  <span className={`px-3 py-1 rounded-full text-xs font-bold ${ORDER_STATUS_STYLES[status] ?? 'bg-slate-100 text-slate-600'}`}>
     {ORDER_STATUS_LABELS[status] ?? status}
   </span>
 );
@@ -158,30 +158,30 @@ const OrderDetailModal = ({ orderId, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
         
         {/* HEADER */}
-        <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-900 z-10">
+        <div className="p-6 border-b dark:border-slate-700 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-900 z-10">
           {isLoading ? (
-            <div className="h-7 w-32 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+            <div className="h-7 w-32 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
           ) : (
             <div className="flex items-center gap-3">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">#{order?.sku}</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">#{order?.sku}</h2>
               <StatusBadge status={order?.orderStatus} />
             </div>
           )}
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-            <X size={22} className="text-gray-500 dark:text-gray-400" />
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors">
+            <X size={22} className="text-slate-500 dark:text-slate-400" />
           </button>
         </div>
 
         {/* CONTENT */}
         {isLoading ? (
           <div className="flex justify-center items-center py-20">
-            <Loader2 className="animate-spin text-orange-500" size={40} />
+            <Loader2 className="animate-spin text-basand-400" size={40} />
           </div>
         ) : !order ? (
-          <div className="text-center py-16 text-gray-500 dark:text-gray-400">Buyurtma topilmadi</div>
+          <div className="text-center py-16 text-slate-500 dark:text-slate-400">Buyurtma topilmadi</div>
         ) : (
           <>
             {/* SCROLLABLE */}
@@ -189,8 +189,8 @@ const OrderDetailModal = ({ orderId, onClose }) => {
               
               {/* INFO */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                  <p className="text-xs text-gray-400 font-medium mb-0.5">Tur</p>
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
+                  <p className="text-xs text-slate-400 font-medium mb-0.5">Tur</p>
                   <div className="flex items-center gap-1.5 text-sm font-semibold">
                     {order.orderType === OrderType.DineIn
                       ? <><UtensilsCrossed size={14} /> Ichida</>
@@ -198,17 +198,17 @@ const OrderDetailModal = ({ orderId, onClose }) => {
                   </div>
                 </div>
                 {order.orderType === OrderType.DineIn && order.tableNumber > 0 && (
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                    <p className="text-xs text-gray-400 font-medium mb-0.5">Stol</p>
+                  <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
+                    <p className="text-xs text-slate-400 font-medium mb-0.5">Stol</p>
                     <p className="text-sm font-semibold">#{order.tableNumber}</p>
                   </div>
                 )}
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                  <p className="text-xs text-gray-400 font-medium mb-0.5">Ofitsant</p>
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
+                  <p className="text-xs text-slate-400 font-medium mb-0.5">Ofitsant</p>
                   <p className="text-sm font-semibold">{order.waiterName || '—'}</p>
                 </div>
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3">
-                  <p className="text-xs text-gray-400 font-medium mb-0.5">Vaqt</p>
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-3">
+                  <p className="text-xs text-slate-400 font-medium mb-0.5">Vaqt</p>
                   <p className="text-sm font-semibold">
                     {(!order.createdAt || new Date(order.createdAt).getFullYear() < 1900)
                       ? '—'
@@ -238,7 +238,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
                               onClick={() => setNewTableId(isSelected ? null : t.id)}
                               className={`py-2 rounded-xl text-sm font-bold transition-all ${
                                 isSelected ? 'bg-blue-500 text-white'
-                                  : isCurrent ? 'bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed'
+                                  : isCurrent ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
                                   : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 hover:bg-green-200'
                               }`}
                             >
@@ -250,7 +250,7 @@ const OrderDetailModal = ({ orderId, onClose }) => {
                       <div className="flex gap-2">
                         <button
                           onClick={() => { setChangeTableMode(false); setNewTableId(null); }}
-                          className="flex-1 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 text-gray-700 dark:text-gray-300 rounded-xl text-sm font-medium"
+                          className="flex-1 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-xl text-sm font-medium"
                         >
                           Bekor
                         </button>
@@ -270,19 +270,19 @@ const OrderDetailModal = ({ orderId, onClose }) => {
 
               {/* ITEMS */}
               <div>
-                <h3 className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase mb-3">
+                <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase mb-3">
                   Mahsulotlar ({order.items?.length ?? 0})
                 </h3>
                 <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-800">
                   {order.items?.map(item => (
                     <div key={item.id} className="flex items-center gap-3 py-3">
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{item.productName ?? 'Mahsulot'}</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{item.productName ?? 'Mahsulot'}</p>
+                        <p className="text-xs text-slate-400">
                           {item.priceAtTime?.toLocaleString()} so'm × {item.count}
                         </p>
                       </div>
-                      <p className="text-sm font-bold w-28 text-right text-gray-900 dark:text-white">
+                      <p className="text-sm font-bold w-28 text-right text-slate-900 dark:text-white">
                         {((item.priceAtTime ?? 0) * item.count).toLocaleString()} so'm
                       </p>
                       {!isLocked && (
@@ -291,18 +291,18 @@ const OrderDetailModal = ({ orderId, onClose }) => {
                             <button
                               onClick={() => handleDecrease(item.productId)}
                               disabled={saveMutation.isPending}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-red-100 hover:text-red-600 disabled:opacity-40"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-red-100 hover:text-red-600 disabled:opacity-40"
                               title="Miqdorni kamaytirish"
                             >
                               <Minus size={12} />
                             </button>
                           )}
-                          <span className="w-6 text-center text-sm font-bold text-gray-900 dark:text-white">{item.count}</span>
+                          <span className="w-6 text-center text-sm font-bold text-slate-900 dark:text-white">{item.count}</span>
                           {hasPermission('Order_ItemIncrease') && (
                             <button
                               onClick={() => handleIncrease(item.productId)}
                               disabled={saveMutation.isPending}
-                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-green-100 hover:text-green-600 disabled:opacity-40"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-green-100 hover:text-green-600 disabled:opacity-40"
                               title="Miqdorni oshirish"
                             >
                               <Plus size={12} />
@@ -330,15 +330,15 @@ const OrderDetailModal = ({ orderId, onClose }) => {
               </div>
 
               {/* TOTAL */}
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 flex justify-between items-center">
-                <span className="text-base font-bold text-gray-900 dark:text-white">Jami:</span>
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">{order.totalAmount?.toLocaleString()} so'm</span>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 flex justify-between items-center">
+                <span className="text-base font-bold text-slate-900 dark:text-white">Jami:</span>
+                <span className="text-2xl font-bold text-slate-900 dark:text-white">{order.totalAmount?.toLocaleString()} so'm</span>
               </div>
             </div>
 
             {/* FOOTER */}
             {!isLocked && (
-              <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 flex flex-col gap-2">
+              <div className="border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 flex flex-col gap-2">
                 {hasChanges && (
                   <button
                     type="button"

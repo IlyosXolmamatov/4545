@@ -34,9 +34,9 @@ const TableStatus = {
 const STATUS_CONFIG = {
   [TableStatus.Empty]: {
     label  : "Bo'sh",
-    card   : 'bg-white dark:bg-gray-900 hover:shadow-lg hover:-translate-y-0.5 active:scale-95',
+    card   : 'bg-white dark:bg-slate-900 hover:shadow-lg hover:-translate-y-0.5 active:scale-95',
     border : 'border-emerald-200 dark:border-emerald-800',
-    number : 'text-gray-900 dark:text-white',
+    number : 'text-slate-900 dark:text-white',
     badge  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
     dot    : 'bg-emerald-400 animate-pulse',
     cursor : 'cursor-pointer',
@@ -89,7 +89,7 @@ function ConnectionBadge({ state }) {
   );
 
   return (
-    <span className="flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+    <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
       <WifiOff size={13} />
       Oflayn
     </span>
@@ -122,7 +122,7 @@ function TableCard({ table, onClick }) {
 
       {/* Capacity (optional) */}
       {table.capacity && (
-        <p className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 mt-1">
+        <p className="flex items-center gap-1 text-xs text-slate-400 dark:text-slate-500 mt-1">
           <Users size={11} />
           {table.capacity} kishi
         </p>
@@ -210,12 +210,12 @@ export default function TablesGrid({ onSelectTable, blockBusy = false }) {
           {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
-              className="h-28 rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse"
+              className="h-28 rounded-2xl bg-slate-100 dark:bg-slate-800 animate-pulse"
             />
           ))}
         </div>
       ) : tables.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+        <div className="flex flex-col items-center justify-center py-20 text-slate-400">
           <ShoppingBag size={48} className="mb-3 opacity-30" />
           <p className="font-medium">Stollar topilmadi</p>
         </div>

@@ -12,10 +12,10 @@ const AppLayout = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-gray-500 font-medium">Yuklanmoqda...</p>
+          <div className="w-10 h-10 border-4 border-basand-400 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium">Yuklanmoqda...</p>
         </div>
       </div>
     );
@@ -26,7 +26,7 @@ const AppLayout = () => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-950 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden">
 
       {/* ── Overlay (mobile only) ── */}
       {sidebarOpen && (
@@ -43,16 +43,16 @@ const AppLayout = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
 
         {/* Mobile top bar */}
-        <header className="md:hidden flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <header className="md:hidden flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             aria-label="Menyuni ochish"
           >
             <Menu size={22} />
           </button>
           <img src="/logo.png" alt="Basand" className="w-7 h-7 rounded-lg object-cover" />
-          <h1 className="text-lg font-bold text-orange-500">Basand</h1>
+          <h1 className="text-lg font-bold text-basand-500 dark:text-basand-400">Basand</h1>
         </header>
 
         <main className="flex-1 overflow-y-auto">

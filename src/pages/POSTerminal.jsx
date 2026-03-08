@@ -94,15 +94,15 @@ const TableCard = ({ table, onClick, hasActiveOrder = false }) => {
       className={`relative aspect-square rounded-2xl border-2 p-2 sm:p-3 flex flex-col items-center justify-center gap-1
                   transition-all duration-150 ${cfg.border}
                   ${isFree
-                    ? 'bg-white dark:bg-gray-900 hover:shadow-md hover:-translate-y-0.5 active:scale-95 cursor-pointer'
+                    ? 'bg-white dark:bg-slate-900 hover:shadow-md hover:-translate-y-0.5 active:scale-95 cursor-pointer'
                     : 'bg-rose-50 dark:bg-rose-950/40 cursor-pointer'
                   }`}
     >
       <span className="absolute top-1.5 right-1.5 text-[8px] font-bold px-1 py-0.5 rounded
-                       bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                       bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 uppercase tracking-wide">
         {typeLabel}
       </span>
-      <span className="text-[9px] sm:text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest leading-none">
+      <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none">
         STOL
       </span>
       <span className={`text-xl sm:text-3xl font-black leading-none ${cfg.num}`}>
@@ -112,7 +112,7 @@ const TableCard = ({ table, onClick, hasActiveOrder = false }) => {
         {cfg.label}
       </span>
       {table.capacity > 0 && (
-        <span className="flex items-center gap-0.5 text-[9px] text-gray-400 mt-0.5">
+        <span className="flex items-center gap-0.5 text-[9px] text-slate-400 mt-0.5">
           <Users size={8} /> {table.capacity}
         </span>
       )}
@@ -123,22 +123,22 @@ const TableCard = ({ table, onClick, hasActiveOrder = false }) => {
 // ─── CART ROW (yangi itemlar uchun — tahrirlash mumkin) ───────────────────────
 
 const CartRow = ({ item, onIncrease, onDecrease, onRemove }) => (
-  <div className="flex items-center gap-2 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
+  <div className="flex items-center gap-2 py-2.5 border-b border-slate-100 dark:border-slate-800 last:border-0">
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{item.name}</p>
-      <p className="text-xs text-gray-400">{item.price.toLocaleString()} so'm × {item.count}</p>
+      <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{item.name}</p>
+      <p className="text-xs text-slate-400">{item.price.toLocaleString()} so'm × {item.count}</p>
     </div>
-    <p className="text-sm font-bold text-gray-800 dark:text-gray-100 shrink-0 min-w-[70px] text-right">
+    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 shrink-0 min-w-[70px] text-right">
       {(item.price * item.count).toLocaleString()}
     </p>
     <div className="flex items-center gap-1 shrink-0">
       <button onClick={() => onDecrease(item.productId)}
-        className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+        className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
         <Minus size={12} />
       </button>
-      <span className="w-5 text-center text-sm font-bold text-gray-800 dark:text-gray-100">{item.count}</span>
+      <span className="w-5 text-center text-sm font-bold text-slate-800 dark:text-slate-100">{item.count}</span>
       <button onClick={() => onIncrease(item.productId)}
-        className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+        className="w-7 h-7 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
         <Plus size={12} />
       </button>
       <button onClick={() => onRemove(item.productId)}
@@ -152,12 +152,12 @@ const CartRow = ({ item, onIncrease, onDecrease, onRemove }) => (
 // ─── EXISTING ITEM ROW (read-only — o'chirish/kamaytirish yo'q) ───────────────
 
 const ExistingItemRow = ({ item }) => (
-  <div className="flex items-center gap-2 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
+  <div className="flex items-center gap-2 py-2.5 border-b border-slate-100 dark:border-slate-800 last:border-0">
     <div className="flex-1 min-w-0">
-      <p className="text-sm font-medium text-gray-600 dark:text-gray-400 truncate">{item.productName}</p>
-      <p className="text-xs text-gray-400">{item.priceAtTime?.toLocaleString()} so'm × {item.count}</p>
+      <p className="text-sm font-medium text-slate-600 dark:text-slate-400 truncate">{item.productName}</p>
+      <p className="text-xs text-slate-400">{item.priceAtTime?.toLocaleString()} so'm × {item.count}</p>
     </div>
-    <p className="text-sm font-semibold text-gray-500 dark:text-gray-500 shrink-0 min-w-[70px] text-right">
+    <p className="text-sm font-semibold text-slate-500 dark:text-slate-500 shrink-0 min-w-[70px] text-right">
       {((item.priceAtTime || 0) * item.count).toLocaleString()}
     </p>
     <div className="w-[88px] shrink-0" /> {/* alignment spacer */}
@@ -169,25 +169,25 @@ const ExistingItemRow = ({ item }) => (
 const ActiveOrderRow = ({ order, onClick }) => (
   <button
     onClick={onClick}
-    className="w-full text-left flex items-center gap-3 px-5 py-3.5 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0"
+    className="w-full text-left flex items-center gap-3 px-5 py-3.5 hover:bg-basand-50 dark:hover:bg-basand-800/10 transition-colors border-b border-slate-100 dark:border-slate-800 last:border-0"
   >
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-2 mb-0.5">
-        <span className="text-sm font-bold text-gray-800 dark:text-gray-100">#{order.sku}</span>
+        <span className="text-sm font-bold text-slate-800 dark:text-slate-100">#{order.sku}</span>
         {order.tableNumber > 0 && (
           <span className="text-xs bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 px-1.5 py-0.5 rounded font-medium">
             Stol {order.tableNumber}
           </span>
         )}
       </div>
-      <p className="text-xs text-gray-400 truncate">
+      <p className="text-xs text-slate-400 truncate">
         {order.items?.map(i => `${i.count}× ${i.productName}`).join(', ')}
       </p>
     </div>
-    <p className="text-sm font-bold text-gray-800 dark:text-gray-100 shrink-0">
+    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 shrink-0">
       {order.totalAmount?.toLocaleString()} so'm
     </p>
-    <ChevronRight size={16} className="text-gray-300 shrink-0" />
+    <ChevronRight size={16} className="text-slate-300 shrink-0" />
   </button>
 );
 
@@ -198,7 +198,7 @@ const Drawer = ({ open, onClose, children }) => {
   return (
     <div className="fixed inset-0 z-50 flex">
       <div className="flex-1 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="w-full max-w-sm bg-white dark:bg-gray-900 flex flex-col shadow-2xl">
+      <div className="w-full max-w-sm bg-white dark:bg-slate-900 flex flex-col shadow-2xl">
         {children}
       </div>
     </div>
@@ -564,29 +564,29 @@ const POSTerminal = () => {
   // ─── RENDER ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950 overflow-hidden">
+    <div className="h-screen flex flex-col bg-slate-50 dark:bg-slate-950 overflow-hidden">
 
       {/* ══ HEADER ════════════════════════════════════════════════════════════ */}
-      <header className="flex-shrink-0 bg-white dark:bg-gray-900 border-b dark:border-gray-800 shadow-sm">
+      <header className="flex-shrink-0 bg-white dark:bg-slate-900 border-b dark:border-slate-800 shadow-sm">
         <div className="flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3">
 
           {step === 'menu' && (
             <button onClick={handleBack}
-              className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors -ml-1 shrink-0">
-              <ArrowLeft size={20} className="text-gray-600 dark:text-gray-300" />
+              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors -ml-1 shrink-0">
+              <ArrowLeft size={20} className="text-slate-600 dark:text-slate-300" />
             </button>
           )}
 
           <div className="flex-1 min-w-0 flex items-center gap-3 flex-wrap">
             {step === 'tables' ? (
               <div>
-                <h1 className="text-lg sm:text-xl font-black text-gray-900 dark:text-white leading-tight">POS Terminal</h1>
-                <p className="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">Stol tanlang yoki olib ketish</p>
+                <h1 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white leading-tight">POS Terminal</h1>
+                <p className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">Stol tanlang yoki olib ketish</p>
               </div>
             ) : (
               <>
                 <div>
-                  <h1 className="text-base sm:text-lg font-black text-gray-900 dark:text-white leading-tight">
+                  <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
                     {orderType === OrderType.TakeOut
                       ? 'Olib ketish'
                       : selectedTable
@@ -594,7 +594,7 @@ const POSTerminal = () => {
                       : 'Menyu'}
                   </h1>
                   {addMode && editingOrder && (
-                    <p className="text-xs text-orange-500 font-semibold">
+                    <p className="text-xs text-basand-400 font-semibold">
                       #{editingOrder.sku} · Qo'shish rejimi
                     </p>
                   )}
@@ -609,11 +609,11 @@ const POSTerminal = () => {
           <button
             onClick={() => setActiveOrdersOpen(true)}
             className="relative p-2 sm:px-3 sm:py-2 flex items-center gap-2
-                       bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700
+                       bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700
                        rounded-xl transition-colors shrink-0"
           >
-            <ClipboardList size={17} className="text-gray-600 dark:text-gray-300" />
-            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 hidden sm:block">Faol</span>
+            <ClipboardList size={17} className="text-slate-600 dark:text-slate-300" />
+            <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 hidden sm:block">Faol</span>
             {visibleActiveOrders.length > 0 && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-blue-500 text-white
                                text-[10px] rounded-full flex items-center justify-center font-bold">
@@ -629,15 +629,15 @@ const POSTerminal = () => {
         <div className="flex-1 overflow-y-auto">
 
           {/* Filter + Search */}
-          <div className="sticky top-0 z-10 bg-white dark:bg-gray-900 border-b dark:border-gray-800 shadow-sm px-4 sm:px-6 py-2.5 flex items-center gap-2 flex-wrap">
+          <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 border-b dark:border-slate-800 shadow-sm px-4 sm:px-6 py-2.5 flex items-center gap-2 flex-wrap">
             {TABLE_TYPE_FILTERS.map(({ value, label, icon: Icon }) => (
               <button
                 key={value}
                 onClick={() => setTableTypeFilter(value)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all shrink-0 ${
                   tableTypeFilter === value
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-transparent'
-                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-gray-400'
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent'
+                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-400'
                 }`}
               >
                 {Icon && <Icon size={11} />}
@@ -645,14 +645,14 @@ const POSTerminal = () => {
               </button>
             ))}
             <div className="relative ml-auto">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 value={tableSearch}
                 onChange={(e) => setTableSearch(e.target.value)}
                 placeholder="Stol raqami..."
-                className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-gray-700
-                           bg-white dark:bg-gray-800 text-gray-900 dark:text-white w-36 sm:w-44
-                           focus:outline-none focus:border-orange-400"
+                className="pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700
+                           bg-white dark:bg-slate-800 text-slate-900 dark:text-white w-36 sm:w-44
+                           focus:outline-none focus:border-basand-300"
               />
             </div>
           </div>
@@ -661,20 +661,20 @@ const POSTerminal = () => {
             {/* Olib ketish — kassa/admin */}
             {!waiter && (
               <div>
-                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Maxsus</p>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Maxsus</p>
                 <button
                   onClick={handleTakeOut}
                   className="flex items-center gap-3 px-5 py-4 rounded-2xl border-2 border-dashed
-                             border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900
-                             hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/10
+                             border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900
+                             hover:border-basand-300 hover:bg-basand-50 dark:hover:bg-basand-800/10
                              transition-all group w-full sm:w-auto"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
-                    <ShoppingBag size={20} className="text-orange-600" />
+                  <div className="w-10 h-10 rounded-xl bg-basand-100 dark:bg-basand-800/30 flex items-center justify-center group-hover:bg-basand-200 transition-colors">
+                    <ShoppingBag size={20} className="text-basand-500" />
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">Olib ketish</p>
-                    <p className="text-xs text-gray-400 dark:text-gray-500">Stol kerak emas</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">Olib ketish</p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500">Stol kerak emas</p>
                   </div>
                 </button>
               </div>
@@ -684,11 +684,11 @@ const POSTerminal = () => {
             {tablesLoading ? (
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
                 {[...Array(16)].map((_, i) => (
-                  <div key={i} className="aspect-square rounded-2xl bg-gray-200 dark:bg-gray-800 animate-pulse" />
+                  <div key={i} className="aspect-square rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
                 ))}
               </div>
             ) : filteredTables.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+              <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                 <span className="text-4xl mb-3">🪑</span>
                 <p className="font-medium text-sm">Stol topilmadi</p>
               </div>
@@ -699,7 +699,7 @@ const POSTerminal = () => {
                 const lbl = type === TableType.Simple ? 'Ichkari' : type === TableType.Terrace ? 'Terasa' : 'VIP';
                 return (
                   <div key={type}>
-                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">{lbl}</p>
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">{lbl}</p>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
                       {group.map(t => <TableCard key={t.id} table={t} onClick={() => handleSelectTable(t)} hasActiveOrder={busyTableNumbers.has(t.tableNumber)} />)}
                     </div>
@@ -720,11 +720,11 @@ const POSTerminal = () => {
         <div className="flex-1 flex flex-col overflow-hidden relative">
 
           {/* Category filter */}
-          <div className="flex-shrink-0 bg-white dark:bg-gray-900 border-b dark:border-gray-800 px-4 py-2 flex gap-2 overflow-x-auto">
+          <div className="flex-shrink-0 bg-white dark:bg-slate-900 border-b dark:border-slate-800 px-4 py-2 flex gap-2 overflow-x-auto">
             <button
               onClick={() => setSelectedCategory(null)}
               className={`px-4 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                !selectedCategory ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                !selectedCategory ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
               Barchasi
@@ -734,7 +734,7 @@ const POSTerminal = () => {
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-4 py-1.5 rounded-xl text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
-                  selectedCategory === cat.id ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  selectedCategory === cat.id ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                 }`}
               >
                 {cat.name}
@@ -746,10 +746,10 @@ const POSTerminal = () => {
           <div className="flex-1 overflow-y-auto p-4 sm:p-5 pb-28">
             {pLoading ? (
               <div className="flex justify-center items-center h-48">
-                <Loader2 className="animate-spin text-orange-500" size={36} />
+                <Loader2 className="animate-spin text-basand-400" size={36} />
               </div>
             ) : visibleProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-48 text-gray-400">
+              <div className="flex flex-col items-center justify-center h-48 text-slate-400">
                 <Package size={48} className="mb-3 opacity-40" />
                 <p className="text-sm">Mahsulotlar topilmadi</p>
               </div>
@@ -763,24 +763,24 @@ const POSTerminal = () => {
                       onClick={() => addToCart(product)}
                       className={`relative text-left p-3 rounded-2xl border-2 transition-all hover:shadow-md active:scale-95 ${
                         inCart
-                          ? 'border-orange-400 bg-orange-50 dark:bg-orange-900/20'
-                          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600'
+                          ? 'border-basand-300 bg-basand-50 dark:bg-basand-800/20'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-600'
                       }`}
                     >
                       {inCart && (
-                        <span className="absolute -top-2 -right-2 min-w-[24px] h-6 px-1 bg-orange-500 text-white
+                        <span className="absolute -top-2 -right-2 min-w-[24px] h-6 px-1 bg-basand-400 text-white
                                          text-xs rounded-full flex items-center justify-center font-bold shadow">
                           {inCart.count}
                         </span>
                       )}
-                      <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-2">
+                      <div className="aspect-square rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-2">
                         {product.imageUrl
                           ? <img src={getImgUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
-                          : <div className="w-full h-full flex items-center justify-center"><UtensilsCrossed size={24} className="text-gray-300" /></div>
+                          : <div className="w-full h-full flex items-center justify-center"><UtensilsCrossed size={24} className="text-slate-300" /></div>
                         }
                       </div>
-                      <p className="text-xs font-semibold text-gray-800 dark:text-gray-100 line-clamp-2 mb-1">{product.name}</p>
-                      <p className="text-xs font-bold text-orange-600">{product.price?.toLocaleString()} so'm</p>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 line-clamp-2 mb-1">{product.name}</p>
+                      <p className="text-xs font-bold text-basand-500">{product.price?.toLocaleString()} so'm</p>
                     </button>
                   );
                 })}
@@ -796,15 +796,15 @@ const POSTerminal = () => {
                 onClick={() => setCartOpen(true)}
                 className={`flex items-center gap-3 pl-4 pr-5 py-3.5 rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 ${
                   cart.length > 0
-                    ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-orange-200 dark:shadow-orange-900/40'
-                    : 'bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 shadow-gray-200 dark:shadow-gray-900/50 border border-gray-200 dark:border-gray-700'
+                    ? 'bg-basand-400 hover:bg-basand-500 text-white shadow-brand-200 dark:shadow-brand-800/40'
+                    : 'bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-gray-200 dark:shadow-gray-900/50 border border-slate-200 dark:border-slate-700'
                 }`}
               >
                 <div className="relative shrink-0">
                   <ShoppingCart size={20} />
                   {cart.length > 0 && (
                     <span className={`absolute -top-2.5 -right-2.5 min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center font-black text-[10px] ${
-                      cart.length > 0 ? 'bg-white text-orange-500' : 'bg-orange-500 text-white'
+                      cart.length > 0 ? 'bg-white text-basand-400' : 'bg-basand-400 text-white'
                     }`}>
                       {cartCount}
                     </span>
@@ -835,34 +835,34 @@ const POSTerminal = () => {
       <Drawer open={cartOpen} onClose={() => setCartOpen(false)}>
 
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-800 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-slate-800 flex-shrink-0">
           <div>
             {addMode && editingOrder ? (
               <>
-                <h2 className="text-base font-black text-gray-900 dark:text-white">
+                <h2 className="text-base font-black text-slate-900 dark:text-white">
                   {editingOrder.orderType === OrderType.TakeOut
                     ? 'Olib ketish'
                     : selectedTable
                     ? `Stol #${selectedTable.tableNumber}`
                     : 'Buyurtma'} · #{editingOrder.sku}
                 </h2>
-                <p className="text-xs text-orange-500 font-semibold">Mavjud buyurtmaga qo'shish</p>
+                <p className="text-xs text-basand-400 font-semibold">Mavjud buyurtmaga qo'shish</p>
               </>
             ) : addMode ? (
               <>
-                <h2 className="text-base font-black text-gray-900 dark:text-white">Buyurtma yuklanmoqda</h2>
-                <p className="text-xs text-gray-400">Iltimos kuting...</p>
+                <h2 className="text-base font-black text-slate-900 dark:text-white">Buyurtma yuklanmoqda</h2>
+                <p className="text-xs text-slate-400">Iltimos kuting...</p>
               </>
             ) : (
               <>
-                <h2 className="text-base font-black text-gray-900 dark:text-white">Savatcha</h2>
-                <p className="text-xs text-gray-400">{cartCount} ta mahsulot</p>
+                <h2 className="text-base font-black text-slate-900 dark:text-white">Savatcha</h2>
+                <p className="text-xs text-slate-400">{cartCount} ta mahsulot</p>
               </>
             )}
           </div>
           <button onClick={() => setCartOpen(false)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
-            <X size={20} className="text-gray-500" />
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            <X size={20} className="text-slate-500" />
           </button>
         </div>
 
@@ -872,25 +872,25 @@ const POSTerminal = () => {
           {addMode ? (
             editingLoading ? (
               <div className="flex justify-center py-10">
-                <Loader2 className="animate-spin text-orange-500" size={28} />
+                <Loader2 className="animate-spin text-basand-400" size={28} />
               </div>
             ) : editingOrder ? (
               <>
                 {/* ── MAVJUD BUYURTMA (read-only) ── */}
                 <div className="pt-4 pb-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                       Mavjud buyurtma
                     </span>
                     {fmtTime(editingOrder.createdAt) && (
-                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                      <span className="flex items-center gap-1 text-[10px] text-slate-400">
                         <Clock size={9} /> {fmtTime(editingOrder.createdAt)}
                       </span>
                     )}
                   </div>
 
                   {(editingOrder.items || []).length === 0 ? (
-                    <p className="text-xs text-gray-400 italic py-2">Mahsulotlar yo'q</p>
+                    <p className="text-xs text-slate-400 italic py-2">Mahsulotlar yo'q</p>
                   ) : (
                     (editingOrder.items || []).map(item => (
                       <ExistingItemRow key={item.id ?? item.productId} item={item} />
@@ -899,29 +899,29 @@ const POSTerminal = () => {
 
                   {/* Mavjud jami */}
                   <div className="flex items-center justify-between pt-2 mt-1">
-                    <span className="text-xs text-gray-400 dark:text-gray-500">Mavjud jami:</span>
-                    <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
+                    <span className="text-xs text-slate-400 dark:text-slate-500">Mavjud jami:</span>
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                       {existingTotal.toLocaleString()} so'm
                     </span>
                   </div>
                 </div>
 
                 {/* ── AJRATUVCHI CHIZIQ ── */}
-                <div className="my-3 border-t-2 border-dashed border-gray-200 dark:border-gray-700" />
+                <div className="my-3 border-t-2 border-dashed border-slate-200 dark:border-slate-700" />
 
                 {/* ── YANGI QO'SHILMOQDA ── */}
                 <div className="pb-2">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">
+                    <span className="text-[10px] font-bold text-basand-400 uppercase tracking-widest">
                       Yangi qo'shilmoqda
                     </span>
-                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                    <span className="flex items-center gap-1 text-[10px] text-slate-400">
                       <Clock size={9} /> {nowTime()}
                     </span>
                   </div>
 
                   {cart.length === 0 ? (
-                    <div className="text-center py-6 text-gray-400">
+                    <div className="text-center py-6 text-slate-400">
                       <ShoppingCart size={28} className="mx-auto mb-2 opacity-30" />
                       <p className="text-xs">Yangi mahsulot tanlang</p>
                     </div>
@@ -939,14 +939,14 @@ const POSTerminal = () => {
                 </div>
               </>
             ) : (
-              <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+              <div className="flex flex-col items-center justify-center py-10 text-slate-400">
                 <p className="text-sm">Buyurtma topilmadi</p>
               </div>
             )
           ) : (
             // Normal mode
             cart.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+              <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                 <ShoppingCart size={36} className="mb-3 opacity-30" />
                 <p className="text-sm">Savatcha bo'sh</p>
               </div>
@@ -965,24 +965,24 @@ const POSTerminal = () => {
         </div>
 
         {/* ── Footer ── */}
-        <div className="px-5 py-4 border-t dark:border-gray-800 bg-gray-50 dark:bg-gray-950 flex-shrink-0">
+        <div className="px-5 py-4 border-t dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex-shrink-0">
 
           {/* Jami ko'rsatish */}
           {addMode && editingOrder ? (
             <div className="space-y-1 mb-4">
-              <div className="flex justify-between text-xs text-gray-400">
+              <div className="flex justify-between text-xs text-slate-400">
                 <span>Mavjud jami:</span>
                 <span className="font-semibold">{existingTotal.toLocaleString()} so'm</span>
               </div>
               {cart.length > 0 && (
-                <div className="flex justify-between text-xs text-orange-500 font-semibold">
+                <div className="flex justify-between text-xs text-basand-400 font-semibold">
                   <span>Yangi:</span>
                   <span>+{totalAmount.toLocaleString()} so'm</span>
                 </div>
               )}
-              <div className="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Jami:</span>
-                <span className="text-xl font-black text-gray-900 dark:text-white">
+              <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">Jami:</span>
+                <span className="text-xl font-black text-slate-900 dark:text-white">
                   {(existingTotal + totalAmount).toLocaleString()} so'm
                 </span>
               </div>
@@ -990,14 +990,14 @@ const POSTerminal = () => {
           ) : (
             <div className="mb-4">
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-gray-400 dark:text-gray-500">Xizmat haqqi (15%):</span>
+                <span className="text-slate-400 dark:text-slate-500">Xizmat haqqi (15%):</span>
                 <span className="text-rose-500 font-semibold">
                   +{Math.round(totalAmount * 0.15).toLocaleString()} so'm
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-bold text-gray-600 dark:text-gray-300">Jami:</span>
-                <span className="text-2xl font-black text-gray-900 dark:text-white">
+                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">Jami:</span>
+                <span className="text-2xl font-black text-slate-900 dark:text-white">
                   {Math.round(totalAmount * 1.15).toLocaleString()} so'm
                 </span>
               </div>
@@ -1007,17 +1007,17 @@ const POSTerminal = () => {
           <div className="flex gap-2">
             <button
               onClick={clearAll}
-              className="flex-1 py-3 bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700
-                         text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-sm transition-colors"
+              className="flex-1 py-3 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700
+                         text-slate-700 dark:text-slate-300 rounded-xl font-semibold text-sm transition-colors"
             >
               Bekor
             </button>
             <button
               onClick={handleSubmit}
               disabled={isPending || (addMode && cart.length === 0)}
-              className="flex-[2] py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold
+              className="flex-[2] py-3 bg-basand-400 hover:bg-basand-500 text-white rounded-xl font-bold
                          text-sm transition-colors disabled:opacity-40 flex items-center justify-center gap-2
-                         shadow-lg shadow-orange-200 dark:shadow-orange-900/30"
+                         shadow-lg shadow-brand-200 dark:shadow-brand-800/30"
             >
               {isPending
                 ? <><Loader2 size={16} className="animate-spin" /> Yuborilmoqda...</>
@@ -1032,19 +1032,19 @@ const POSTerminal = () => {
 
       {/* ══ FAOL BUYURTMALAR DRAWER ═══════════════════════════════════════════ */}
       <Drawer open={activeOrdersOpen} onClose={() => setActiveOrdersOpen(false)}>
-        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-800 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-slate-800 flex-shrink-0">
           <div>
-            <h2 className="text-base font-black text-gray-900 dark:text-white">Faol buyurtmalar</h2>
-            <p className="text-xs text-gray-400">{visibleActiveOrders.length} ta</p>
+            <h2 className="text-base font-black text-slate-900 dark:text-white">Faol buyurtmalar</h2>
+            <p className="text-xs text-slate-400">{visibleActiveOrders.length} ta</p>
           </div>
           <button onClick={() => setActiveOrdersOpen(false)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors">
-            <X size={20} className="text-gray-500" />
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors">
+            <X size={20} className="text-slate-500" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">
           {visibleActiveOrders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 py-16">
+            <div className="flex flex-col items-center justify-center h-full text-slate-400 py-16">
               <ClipboardList size={40} className="mb-3 opacity-40" />
               <p className="text-sm font-medium">Faol buyurtmalar yo'q</p>
             </div>

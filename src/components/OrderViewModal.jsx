@@ -43,6 +43,25 @@ export default function OrderViewModal({ order, onClose }) {
     enabled:  isOpen && !!order?.id,
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: () => orderAPI.delete(order.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orders', 'my-active'] });
+      const tableId = detail?.tableId;
+      if (tableId) {
+        queryClient.setQueryData(['tables'], (old) =>
+          Array.isArray(old)
+            ? old.map(t => t.id === tableId ? { ...t, tableStatus: TableStatus.Empty } : t)
+            : old
+        );
+      }
+      toast.success("Buyurtma o'chirildi");
+      onClose();
+    },
+    onError: () => toast.error("O'chirishda xatolik"),
+  });
+
   const changeStatusMutation = useMutation({
     mutationFn: (status) => orderAPI.changeStatus(order.id, status),
     onSuccess: (_, status) => {
@@ -78,47 +97,47 @@ export default function OrderViewModal({ order, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col">
 
         {/* ── HEADER ── */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-2.5 min-w-0">
-            <h2 className="text-base font-bold text-gray-900 dark:text-white truncate">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white truncate">
               #{current.sku}
             </h2>
             <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${
-              ORDER_STATUS_COLORS[current.orderStatus] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+              ORDER_STATUS_COLORS[current.orderStatus] ?? 'badge-info'
             }`}>
               {OrderStatus[current.orderStatus] ?? '—'}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="shrink-0 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="shrink-0 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
-            <X size={18} className="text-gray-400 dark:text-gray-500" />
+            <X size={18} className="text-slate-400 dark:text-slate-500" />
           </button>
         </div>
 
         {/* ── LOADING ── */}
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center py-16">
-            <Loader2 size={32} className="animate-spin text-orange-400" />
+            <Loader2 size={32} className="animate-spin text-basand-400" />
           </div>
         ) : (
           <>
             {/* ── META INFO ── */}
-            <div className="grid grid-cols-2 gap-2 px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="grid grid-cols-2 gap-2 px-5 py-4 border-b border-slate-200 dark:border-slate-700">
               {[
                 { label: 'Tur',        value: ORDER_TYPE_LABELS[current.orderType] ?? '—' },
                 { label: 'Stol',       value: tableNum ? `#${tableNum}` : '—' },
                 { label: 'Ofitsant',   value: waiterName, truncate: true },
                 { label: 'Vaqt',       value: formatDate(createdAt) },
               ].map(({ label, value, truncate }) => (
-                <div key={label} className="bg-gray-50 dark:bg-gray-800 rounded-xl px-3 py-2.5">
-                  <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+                <div key={label} className="bg-slate-100 dark:bg-slate-700 rounded-lg px-3 py-2.5">
+                  <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">{label}</p>
                   <p
-                    className={`text-sm font-semibold text-gray-900 dark:text-white ${truncate ? 'truncate' : ''}`}
+                    className={`text-sm font-semibold text-slate-900 dark:text-white ${truncate ? 'truncate' : ''}`}
                     title={truncate ? value : undefined}
                   >
                     {value}
@@ -129,15 +148,15 @@ export default function OrderViewModal({ order, onClose }) {
 
             {/* ── MAHSULOTLAR ── */}
             <div className="flex-1 overflow-y-auto px-5 py-4">
-              <p className="text-xs text-orange-500 font-semibold mb-3">Mahsulotlar ({current.items?.length || 0})</p>
+              <p className="text-xs text-basand-500 dark:text-basand-400 font-semibold mb-3">Mahsulotlar ({current.items?.length || 0})</p>
               <div className="space-y-2">
                 {current.items?.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div key={item.id} className="flex items-center justify-between p-2 bg-slate-100 dark:bg-slate-700 rounded-lg">
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.productName}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">{item.count}× @ {(item.priceAtTime || 0).toLocaleString('ru-RU')} so'm</p>
+                      <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.productName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.count}× @ {(item.priceAtTime || 0).toLocaleString('ru-RU')} so'm</p>
                     </div>
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
                       {((item.count || 1) * (item.priceAtTime || 0)).toLocaleString('ru-RU')} so'm
                     </p>
                   </div>
@@ -146,24 +165,24 @@ export default function OrderViewModal({ order, onClose }) {
             </div>
 
             {/* ── TOTAL ── */}
-            <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 space-y-1.5">
+            <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 space-y-1.5">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-300">Jami:</span>
-                <span className="font-semibold text-gray-800 dark:text-white">
+                <span className="text-slate-600 dark:text-slate-300">Jami:</span>
+                <span className="font-semibold text-slate-800 dark:text-white">
                   {formatPrice(current.totalAmount)}
                 </span>
               </div>
               {current.orderType === 1 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-rose-500">Xizmat haqqi ({COMMISSION_RATE * 100}%):</span>
-                  <span className="font-semibold text-rose-500">
+                  <span className="text-status-error">Xizmat haqqi ({COMMISSION_RATE * 100}%):</span>
+                  <span className="font-semibold text-status-error">
                     {formatPrice(Math.round((current.totalAmount || 0) * COMMISSION_RATE))}
                   </span>
                 </div>
               )}
-              <div className="flex justify-between pt-1 border-t border-gray-200 dark:border-gray-700">
-                <span className="font-bold text-gray-900 dark:text-white">Umumiy to'lanadigan:</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400 text-base">
+              <div className="flex justify-between pt-1 border-t border-slate-200 dark:border-slate-700">
+                <span className="font-bold text-slate-900 dark:text-white">Umumiy to'lanadigan:</span>
+                <span className="font-bold text-status-success text-base">
                   {current.orderType === 1
                     ? formatPrice(Math.round((current.totalAmount || 0) * (1 + COMMISSION_RATE)))
                     : formatPrice(current.totalAmount)}
@@ -180,16 +199,16 @@ export default function OrderViewModal({ order, onClose }) {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setDlg({
-                      message: "To'lovni qabul qilasizmi?",
-                      confirmText: "Ha, qabul qilish",
-                      danger: false,
-                      onConfirm: () => changeStatusMutation.mutate(OrderStatus.Finished),
+                      message: "Buyurtmani o'chirasizmi? Bu amalni qaytarib bo'lmaydi.",
+                      confirmText: "Ha, o'chirish",
+                      danger: true,
+                      onConfirm: () => deleteMutation.mutate(),
                     })}
-                    disabled={changeStatusMutation.isPending}
-                    className="flex-1 py-2.5 bg-green-500 hover:bg-green-600 text-white rounded-xl text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    disabled={deleteMutation.isPending || changeStatusMutation.isPending}
+                    className="flex-1 btn-danger py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-1.5"
                   >
-                    {changeStatusMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
-                    {current.orderType === 1 ? "To'lovni qabul qilish" : 'Yakunlash'}
+                    {deleteMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : null}
+                    Buyurtmani o'chirish
                   </button>
                   <button
                     onClick={() => setDlg({
@@ -199,7 +218,7 @@ export default function OrderViewModal({ order, onClose }) {
                       onConfirm: () => changeStatusMutation.mutate(OrderStatus.Cancelled),
                     })}
                     disabled={changeStatusMutation.isPending}
-                    className="flex-1 py-2.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 text-red-600 border border-red-200 dark:border-red-800 rounded-xl text-sm font-semibold disabled:opacity-50"
+                    className="flex-1 py-2.5 badge-error rounded-lg text-sm font-semibold disabled:opacity-50 cursor-pointer hover:opacity-90"
                   >
                     Bekor qilish
                   </button>
@@ -210,8 +229,8 @@ export default function OrderViewModal({ order, onClose }) {
               <div className="flex gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300
-                             font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="flex-1 py-2.5 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300
+                             font-medium text-sm hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                 >
                   Yopish
                 </button>

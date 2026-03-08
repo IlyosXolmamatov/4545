@@ -44,7 +44,7 @@ export default function PeriodFilter({ filter, onChange }) {
           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
             filter.period === p.value
               ? 'bg-indigo-600 text-white shadow-sm'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
           }`}
         >
           {p.label}
@@ -53,20 +53,20 @@ export default function PeriodFilter({ filter, onChange }) {
 
       {filter.period === 'Custom' && (
         <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
-          <CalendarDays className="w-4 h-4 text-gray-400 hidden sm:block" />
+          <CalendarDays className="w-4 h-4 text-slate-400 hidden sm:block" />
           <input
             type="date"
             value={localStart}
             onChange={(e) => setLocalStart(e.target.value)}
-            className="px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
-          <span className="text-gray-400 text-sm">—</span>
+          <span className="text-slate-400 text-sm">—</span>
           <input
             type="date"
             value={localEnd}
             min={localStart || undefined}
             onChange={(e) => setLocalEnd(e.target.value)}
-            className="px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button
             onClick={handleApply}
